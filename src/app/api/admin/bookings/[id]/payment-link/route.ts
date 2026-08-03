@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getMollieClient } from "@/lib/mollie";
+import { sendBookingConfirmationEmail } from "@/lib/google";
 
 export async function POST(request: Request, ctx: RouteContext<"/api/admin/bookings/[id]/payment-link">) {
   const { id } = await ctx.params;
@@ -38,7 +39,9 @@ export async function POST(request: Request, ctx: RouteContext<"/api/admin/booki
       data: { molliePaymentId: payment.id, mollieCheckoutUrl: checkoutUrl },
     });
 
-    return NextResponse.json({ url: checkoutUrl });
+    const emailSent = checkoutUrl ? await sendBookingConfirmationEmail(booking.id, checkoutUrl) : false;
+
+    return NextResponse.json({ url: checkoutUrl, emailSent });
   } catch (err) {
     const message = err instanceof Error ? err.message : "Failed to create payment link.";
     return NextResponse.json({ error: message }, { status: 500 });

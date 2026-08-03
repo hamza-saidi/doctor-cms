@@ -16,6 +16,7 @@ export default function PaymentLinkButton({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
 
   async function generateLink() {
     setLoading(true);
@@ -27,6 +28,7 @@ export default function PaymentLinkButton({
       const body = await res.json();
       if (!res.ok) throw new Error(body.error ?? "Failed to generate link.");
       setUrl(body.url);
+      setEmailSent(Boolean(body.emailSent));
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to generate link.");
     } finally {
@@ -48,13 +50,18 @@ export default function PaymentLinkButton({
   return (
     <div className="flex flex-col items-end gap-1">
       {url ? (
-        <button
-          onClick={copyLink}
-          className="flex items-center gap-1.5 text-sm text-primary hover:underline"
-        >
-          {copied ? <Check size={14} /> : <Copy size={14} />}
-          {copied ? "Copied!" : "Copy payment link"}
-        </button>
+        <>
+          <button
+            onClick={copyLink}
+            className="flex items-center gap-1.5 text-sm text-primary hover:underline"
+          >
+            {copied ? <Check size={14} /> : <Copy size={14} />}
+            {copied ? "Copied!" : "Copy payment link"}
+          </button>
+          {emailSent && (
+            <span className="text-xs text-on-surface-variant/70">Confirmation emailed to client</span>
+          )}
+        </>
       ) : (
         <button
           onClick={generateLink}

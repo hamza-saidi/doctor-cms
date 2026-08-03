@@ -35,7 +35,8 @@ export default async function AdminSettingsPage({
 
       {connected && (
         <div className="bg-primary-container text-on-primary-container rounded-lg p-4 text-sm">
-          Google Calendar connected successfully.
+          Google account connected successfully — calendar sync and confirmation emails are now
+          active.
         </div>
       )}
       {error && (
@@ -74,17 +75,19 @@ export default async function AdminSettingsPage({
         </form>
       </div>
 
-      {/* Google Calendar */}
+      {/* Google Calendar & Email */}
       <div className="bg-surface-container-lowest rounded-xl p-6 service-card-shadow space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="font-display text-headline-sm text-primary">Google Calendar</h2>
+          <h2 className="font-display text-headline-sm text-primary">Google Calendar & Email</h2>
           <ConfiguredBadge
             configured={Boolean(settings?.googleClientId && settings?.googleClientSecret)}
           />
         </div>
         <p className="text-on-surface-variant text-sm">
           Client ID/Secret come from a Google Cloud OAuth client (set up once by your developer).
-          Once saved, connect your own calendar below.
+          Once saved, connect your own Google account below — this both syncs confirmed bookings
+          to your calendar and sends the booking confirmation + payment link to clients from your
+          own Gmail address when you generate a payment link.
         </p>
         <form action={saveGoogleSettings} className="space-y-3">
           <div className="space-y-1">
@@ -132,7 +135,7 @@ export default async function AdminSettingsPage({
               className="inline-flex items-center gap-2 mt-4 bg-primary text-on-primary px-5 py-2.5 rounded-full text-sm hover:bg-primary-container hover:text-on-primary-container transition-colors"
             >
               <CalendarPlus size={16} />
-              Connect Google Calendar
+              Connect Google Account
             </a>
           )}
         </div>
