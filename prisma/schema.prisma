@@ -46,8 +46,9 @@ model Service {
   sortOrder        Int      @default(0)
   updatedAt        DateTime @updatedAt
 
-  slots    AvailabilitySlot[]
-  bookings Booking[]
+  slots             AvailabilitySlot[]
+  bookings          Booking[]
+  availabilityRules AvailabilityRule[]
 }
 
 model Package {
@@ -70,7 +71,46 @@ model AvailabilitySlot {
   isBooked  Boolean  @default(false)
   booking   Booking?
 
+  @@unique([serviceId, startsAt])
   @@index([startsAt])
+}
+
+// A weekly recurring rule ("Consultation, every Monday 09:00–17:00,
+// online, 50-min sessions") that generates real AvailabilitySlot rows on a
+// rolling window — see lib/availability.ts. Times are Europe/Helsinki
+// wall-clock, converted to UTC instants at generation time (DST-aware).
+model AvailabilityRule {
+  id              String   @id @default(cuid())
+  serviceId       String
+  service         Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  dayOfWeek       Int // 0 = Sunday .. 6 = Saturday
+  startTime       String // "09:00", Europe/Helsinki local
+  endTime         String // "17:00", Europe/Helsinki local
+  format          String // "online" | "in-person"
+  durationMinutes Int      @default(50)
+  createdAt       DateTime @default(now())
+}
+
+// A day (e.g. holiday, vacation) with no availability regardless of what
+// the recurring rules would otherwise generate. Removes matching unbooked
+// AvailabilitySlot rows when added.
+model BlockedDate {
+  id     String  @id @default(cuid())
+  date   String  @unique // "YYYY-MM-DD", Europe/Helsinki local date
+  reason String?
+}
+
+// Marks one specific rule-generated occurrence as intentionally removed
+// (e.g. admin deleted "Tuesday 14:00" once) so the next generation pass
+// doesn't recreate it — plain deletion alone isn't enough since the rule
+// would just regenerate the same slot again.
+model AvailabilityException {
+  id        String   @id @default(cuid())
+  serviceId String
+  startsAt  DateTime
+  createdAt DateTime @default(now())
+
+  @@unique([serviceId, startsAt])
 }
 
 model Booking {
