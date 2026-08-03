@@ -1,0 +1,147 @@
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DATABASE_URL_UNPOOLED")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model AdminUser {
+  id           String   @id @default(cuid())
+  email        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+}
+
+model BusinessInfo {
+  id            Int    @id @default(autoincrement())
+  name          String @default("WellSight")
+  tagline       String
+  email         String
+  phone         String
+  whatsapp      String
+  street        String
+  postalCode    String
+  city          String
+  country       String
+  countryCode   String
+  hoursWeekdays String // e.g. "8:00 AM – 6:00 PM"
+  hoursWeekend  String
+}
+
+model Service {
+  id               String   @id @default(cuid())
+  slug             String   @unique
+  name             String
+  shortDescription String
+  duration         String
+  fee              String // display text, e.g. "€90" or "€70–90"
+  priceCents       Int? // exact amount used for Mollie Checkout; null = not billable online yet
+  currency         String   @default("eur")
+  includes         String
+  status           String   @default("available") // "available" | "comingSoon"
+  detail           String // paragraphs joined by \n\n
+  sortOrder        Int      @default(0)
+  updatedAt        DateTime @updatedAt
+
+  slots    AvailabilitySlot[]
+  bookings Booking[]
+}
+
+model Package {
+  id           String  @id @default(cuid())
+  name         String
+  description  String
+  fee          String?
+  originalFee  String?
+  note         String?
+  sortOrder    Int     @default(0)
+}
+
+model AvailabilitySlot {
+  id        String   @id @default(cuid())
+  serviceId String
+  service   Service  @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  startsAt  DateTime
+  endsAt    DateTime
+  format    String // "online" | "in-person"
+  isBooked  Boolean  @default(false)
+  booking   Booking?
+
+  @@index([startsAt])
+}
+
+model Booking {
+  id                String            @id @default(cuid())
+  name              String
+  email             String
+  serviceId         String
+  service           Service           @relation(fields: [serviceId], references: [id])
+  slotId            String?           @unique
+  slot              AvailabilitySlot? @relation(fields: [slotId], references: [id])
+  format            String // "online" | "in-person"
+  message           String?
+  status            String            @default("pending") // "pending" | "confirmed" | "cancelled"
+  paid              Boolean           @default(false)
+  molliePaymentId   String?
+  mollieCheckoutUrl String?
+  googleEventId     String?
+  createdAt         DateTime          @default(now())
+}
+
+model ContactMessage {
+  id        String   @id @default(cuid())
+  firstName String
+  lastName  String
+  email     String
+  message   String?
+  createdAt DateTime @default(now())
+}
+
+// Single-row connection to the psychologist's own Google Calendar, set up
+// once from /admin/settings via OAuth — no manual token handling for her.
+model GoogleCalendarConnection {
+  id                   Int      @id @default(1)
+  accountEmail         String
+  refreshToken         String
+  accessToken          String?
+  accessTokenExpiresAt DateTime?
+  calendarId           String   @default("primary")
+  connectedAt          DateTime @default(now())
+}
+
+// Third-party API credentials, entered through /admin/settings instead of
+// .env — the client manages her own Mollie/Google keys without ever opening
+// a file. Single row (id=1).
+model IntegrationSettings {
+  id                 Int     @id @default(1)
+  mollieApiKey       String?
+  googleClientId     String?
+  googleClientSecret String?
+}
+
+// Per-page <title>/meta description, editable from /admin/seo. Seeded from
+// the Lot 3 keyword research; path is the route it applies to (e.g. "/",
+// "/about-us"). Falls back to a hardcoded default if a row is missing.
+model PageSeo {
+  id          String   @id @default(cuid())
+  path        String   @unique
+  title       String
+  description String
+  updatedAt   DateTime @updatedAt
+}
+
+// Blog posts, editable from /admin/blog. English-only for now — body is
+// plain paragraphs (blank line between), same convention as Service.detail.
+model Post {
+  id          String    @id @default(cuid())
+  slug        String    @unique
+  title       String
+  excerpt     String
+  body        String
+  status      String    @default("draft") // "draft" | "published"
+  publishedAt DateTime?
+  updatedAt   DateTime  @updatedAt
+}
