@@ -20,6 +20,16 @@ const serviceImages: Record<string, string> = {
   neuropsykologia: "/images/neuropsychology-assessment.jpg",
 };
 
+// Maps this page's Finnish slugs to the English Prisma slugs the actual
+// booking form (English-only) reads, so the service pre-selects correctly
+// after the fi → fi/book-and-pay → book-and-pay hand-off.
+const englishSlugs: Record<string, string> = {
+  konsultointi: "consultation",
+  terapia: "therapy",
+  vertaisryhmat: "peer-group",
+  neuropsykologia: "neuropsychology",
+};
+
 const services = [
   {
     slug: "konsultointi",
@@ -108,7 +118,7 @@ export default function OurServicesPageFi() {
                   <Photo
                     src={serviceImages[service.slug]}
                     alt={`${service.name} WellSightin vastaanotolla, Helsinki`}
-                    className="aspect-[16/9] rounded-xl w-full"
+                    className="hidden md:block aspect-[4/3] rounded-xl w-full max-w-xs"
                   />
                 )}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-surface-container-lowest rounded-xl p-6 service-card-shadow">
@@ -131,7 +141,7 @@ export default function OurServicesPageFi() {
                   ))}
                 </div>
                 {service.available ? (
-                  <Link href="/fi/book-and-pay" className="inline-flex items-center gap-2 bg-primary text-on-primary px-8 py-3 rounded-full text-label-lg hover:bg-primary-container hover:text-on-primary-container transition-all duration-500 hover:scale-105">
+                  <Link href={`/fi/book-and-pay?service=${englishSlugs[service.slug] ?? ""}`} className="inline-flex items-center gap-2 bg-primary text-on-primary px-8 py-3 rounded-full text-label-lg hover:bg-primary-container hover:text-on-primary-container transition-all duration-500 hover:scale-105">
                     <CheckCircle2 size={18} />
                     Varaa {service.name.toLowerCase()}
                   </Link>

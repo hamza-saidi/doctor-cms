@@ -30,9 +30,9 @@ export default function HowWeMeetPageFi() {
       </section>
 
       <Reveal>
-        <section className="px-4 md:px-16 py-12 md:py-16">
+        <section className="bg-primary-fixed/40 px-4 md:px-16 py-12 md:py-16">
           <div className="max-w-[1280px] mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            <LocationMap locale="fi" className="aspect-[4/3] rounded-xl w-full order-2 lg:order-1 border border-surface-variant" />
+            <LocationMap locale="fi" className="aspect-[4/3] rounded-xl w-full order-2 lg:order-1 border-2 border-deep-green" />
             <div className="space-y-6 order-1 lg:order-2">
               <h2 className="font-display text-headline-md text-primary">Henkilökohtaiset istunnot</h2>
               <div>
@@ -72,7 +72,7 @@ export default function HowWeMeetPageFi() {
                   ohjeet liittymistä varten. Voit valita, pidätkö kameran päällä vai pois päältä.
                 </p>
               </div>
-              <div>
+              <div className="mt-4">
                 <h4 className="text-label-lg text-primary uppercase tracking-widest mb-2">Tekniset vaatimukset</h4>
                 <ul className="space-y-2 text-on-surface-variant text-body-md">
                   <li className="flex items-center gap-2"><Wifi size={18} className="text-primary" /> Vakaa internetyhteys</li>

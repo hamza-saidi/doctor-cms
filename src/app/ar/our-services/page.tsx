@@ -20,6 +20,16 @@ const serviceImages: Record<string, string> = {
   "علم-النفس-العصبي": "/images/neuropsychology-assessment.jpg",
 };
 
+// Maps this page's Arabic slugs to the English Prisma slugs the actual
+// booking form (English-only) reads, so the service pre-selects correctly
+// after the ar → ar/book-and-pay → book-and-pay hand-off.
+const englishSlugs: Record<string, string> = {
+  "الاستشارات": "consultation",
+  "العلاج": "therapy",
+  "الدعم-الجماعي": "peer-group",
+  "علم-النفس-العصبي": "neuropsychology",
+};
+
 const services = [
   {
     slug: "الاستشارات",
@@ -106,7 +116,7 @@ export default function OurServicesPageAr() {
                   <Photo
                     src={serviceImages[service.slug]}
                     alt={`${service.name} في عيادة WellSight بهلسنكي`}
-                    className="aspect-[16/9] rounded-xl w-full"
+                    className="hidden md:block aspect-[4/3] rounded-xl w-full max-w-xs"
                   />
                 )}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-surface-container-lowest rounded-xl p-6 service-card-shadow">
@@ -129,7 +139,7 @@ export default function OurServicesPageAr() {
                   ))}
                 </div>
                 {service.available ? (
-                  <Link href="/ar/book-and-pay" className="inline-flex items-center gap-2 bg-primary text-on-primary px-8 py-3 rounded-full text-label-lg hover:bg-primary-container hover:text-on-primary-container transition-all duration-500 hover:scale-105">
+                  <Link href={`/ar/book-and-pay?service=${englishSlugs[service.slug] ?? ""}`} className="inline-flex items-center gap-2 bg-primary text-on-primary px-8 py-3 rounded-full text-label-lg hover:bg-primary-container hover:text-on-primary-container transition-all duration-500 hover:scale-105">
                     <CheckCircle2 size={18} />
                     احجزي الآن
                   </Link>

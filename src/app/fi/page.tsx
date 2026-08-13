@@ -116,9 +116,6 @@ export default function HomePageFi() {
                 </div>
               </div>
               <div className="relative bg-surface-container-lowest rounded-xl overflow-hidden service-card-shadow flex flex-col border-2 border-primary/10">
-                <span className="absolute top-4 right-4 z-10 bg-primary text-on-primary text-label-md px-3 py-1 rounded-full">
-                  Suosituin
-                </span>
                 <Photo
                   src="/images/therapy-room-helsinki.jpg"
                   alt="Terapia WellSightin vastaanotolla, Helsinki"
@@ -146,19 +143,19 @@ export default function HomePageFi() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-24 items-center">
             <div className="order-2 lg:order-1 grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-4">
-                <div className="bg-secondary-container p-6 md:p-8 rounded-xl">
+                <div className="bg-primary-fixed p-6 md:p-8 rounded-xl">
                   <ShieldCheck className="text-primary mb-4" size={32} strokeWidth={1.5} />
                   <h4 className="font-display text-headline-sm text-primary mb-2">Luottamuksellisuus</h4>
                   <p className="text-on-surface-variant text-body-md">Luottamuksellisuus aina etusijalla.</p>
                 </div>
-                <div className="bg-tertiary-fixed p-6 md:p-8 rounded-xl">
+                <div className="bg-primary-fixed-dim p-6 md:p-8 rounded-xl">
                   <Heart className="text-primary mb-4" size={32} strokeWidth={1.5} />
                   <h4 className="font-display text-headline-sm text-primary mb-2">Osallistava ilmapiiri</h4>
                   <p className="text-on-surface-variant text-body-md">Turvallinen ja osallistava ilmapiiri kaikille.</p>
                 </div>
               </div>
               <div className="space-y-4">
-                <div className="bg-surface-container-high p-6 md:p-8 rounded-xl">
+                <div className="bg-primary-fixed p-6 md:p-8 rounded-xl">
                   <Brain className="text-primary mb-4" size={32} strokeWidth={1.5} />
                   <h4 className="font-display text-headline-sm text-primary mb-2">Näyttöön perustuva</h4>
                   <p className="text-on-surface-variant text-body-md">Selkeä ja tavoitteellinen hoito.</p>
@@ -190,7 +187,7 @@ export default function HomePageFi() {
           <div className="max-w-[1280px] mx-auto">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:items-center">
               <div className="lg:col-span-7 order-2 lg:order-1">
-                <LocationMap locale="fi" className="h-[300px] sm:h-[400px] lg:h-[500px] rounded-2xl border border-surface-variant w-full" />
+                <LocationMap locale="fi" className="h-[300px] sm:h-[400px] lg:h-[500px] rounded-2xl border-2 border-deep-green w-full" />
               </div>
               <div className="lg:col-span-5 flex flex-col justify-center space-y-8 md:space-y-12 order-1 lg:order-2">
                 <h2 className="font-display text-headline-lg text-primary">Sijainti</h2>
@@ -226,15 +223,15 @@ export default function HomePageFi() {
 
       <Reveal>
         <section className="py-[clamp(60px,10vw,120px)] px-4 md:px-16 max-w-[1280px] mx-auto">
-          <div className="bg-primary-container rounded-3xl overflow-hidden grid grid-cols-1 lg:grid-cols-2">
+          <div className="bg-deep-green rounded-3xl overflow-hidden grid grid-cols-1 lg:grid-cols-2">
             <div className="p-8 md:p-12 lg:p-20 flex flex-col justify-center space-y-6 md:space-y-8">
-              <h2 className="font-display text-headline-lg text-primary-fixed">Verkkotapaamiset</h2>
-              <p className="font-body text-on-primary-container text-body-lg">
+              <h2 className="font-display text-headline-lg text-on-deep-green">Verkkotapaamiset</h2>
+              <p className="font-body text-on-deep-green/80 text-body-lg">
                 Verkkopalvelumme sopii arkeesi – joustavaa, luottamuksellista ja turvallista.
               </p>
               <div className="flex items-start gap-4">
-                <Laptop className="text-primary-fixed mt-1 flex-shrink-0" size={24} />
-                <p className="text-on-primary-container text-body-md">
+                <Laptop className="text-on-deep-green mt-1 flex-shrink-0" size={24} />
+                <p className="text-on-deep-green/80 text-body-md">
                   Ei ylimääräisiä ohjelmia — liity suoraan selaimestasi varauksen jälkeen.
                 </p>
               </div>

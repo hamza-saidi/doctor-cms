@@ -18,7 +18,13 @@ const services = [
   { name: "الدعم الجماعي", duration: "60-90 دقيقة", fee: "50 يورو للشخص" },
 ];
 
-export default function BookAndPayPageAr() {
+export default async function BookAndPayPageAr({
+  searchParams,
+}: {
+  searchParams: Promise<{ service?: string }>;
+}) {
+  const { service } = await searchParams;
+  const continueHref = service ? `/book-and-pay?service=${service}` : "/book-and-pay";
   return (
     <>
       <section className="py-16 md:py-24 px-4 md:px-16 max-w-[1280px] mx-auto text-center">
@@ -48,7 +54,7 @@ export default function BookAndPayPageAr() {
                 نظام الحجز متاح حاليًا باللغة الإنجليزية. يمكنك مع ذلك اختيار الموعد والدفع
                 بأمان — فقط نصوص النموذج تظهر بالإنجليزية.
               </p>
-              <Link href="/book-and-pay" className="inline-block bg-primary text-on-primary px-8 py-3 rounded-full text-label-lg hover:bg-primary-container hover:text-on-primary-container transition-all duration-500 hover:scale-105">
+              <Link href={continueHref} className="inline-block bg-primary text-on-primary px-8 py-3 rounded-full text-label-lg hover:bg-primary-container hover:text-on-primary-container transition-all duration-500 hover:scale-105">
                 المتابعة إلى الحجز
               </Link>
             </div>

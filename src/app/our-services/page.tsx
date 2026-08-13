@@ -76,7 +76,7 @@ export default async function OurServicesPage() {
                     <Photo
                       src={serviceImages[service.slug]}
                       alt={`${service.name} at WellSight, Helsinki`}
-                      className="aspect-[16/9] rounded-xl w-full"
+                      className="hidden md:block aspect-[4/3] rounded-xl w-full max-w-xs"
                     />
                   )}
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-surface-container-lowest rounded-xl p-6 service-card-shadow">
@@ -111,7 +111,7 @@ export default async function OurServicesPage() {
 
                   {service.status === "available" ? (
                     <Link
-                      href="/book-and-pay"
+                      href={`/book-and-pay?service=${service.slug}`}
                       className="inline-flex items-center gap-2 bg-primary text-on-primary px-8 py-3 rounded-full text-label-lg hover:bg-primary-container hover:text-on-primary-container transition-all duration-500 hover:scale-105"
                     >
                       <CheckCircle2 size={18} />

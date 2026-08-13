@@ -31,10 +31,10 @@ export default function HowWeMeetPage() {
       </section>
 
       <Reveal>
-        <section className="px-4 md:px-16 py-12 md:py-16">
+        <section className="bg-primary-fixed/40 px-4 md:px-16 py-12 md:py-16">
           <div className="max-w-[1280px] mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <LocationMap
-              className="aspect-[4/3] rounded-xl w-full order-2 lg:order-1 border border-surface-variant"
+              className="aspect-[4/3] rounded-xl w-full order-2 lg:order-1 border-2 border-deep-green"
             />
             <div className="space-y-6 order-1 lg:order-2">
               <h2 className="font-display text-headline-md text-primary">In-Person Sessions</h2>
@@ -92,7 +92,7 @@ export default function HowWeMeetPage() {
                   comfortable.
                 </p>
               </div>
-              <div>
+              <div className="mt-4">
                 <h4 className="text-label-lg text-primary uppercase tracking-widest mb-2">
                   Technical Requirements
                 </h4>

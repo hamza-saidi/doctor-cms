@@ -130,7 +130,7 @@ export default function ContactForm({ locale = "en" }: { locale?: Locale }) {
       <button
         type="submit"
         disabled={status === "sending"}
-        className="w-full bg-primary text-on-primary py-4 rounded-lg text-label-lg hover:bg-primary-container hover:text-on-primary-container transition-all duration-500 hover:scale-[1.02] active:scale-95 disabled:opacity-60"
+        className="w-full bg-deep-green text-on-deep-green py-4 rounded-lg text-label-lg hover:opacity-90 transition-all duration-500 hover:scale-[1.02] active:scale-95 disabled:opacity-60"
       >
         {status === "sending" ? t.sending : t.send}
       </button>

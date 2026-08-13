@@ -18,7 +18,13 @@ const services = [
   { name: "Vertaisryhmätuki", duration: "60–90 min", fee: "50 € / hlö" },
 ];
 
-export default function BookAndPayPageFi() {
+export default async function BookAndPayPageFi({
+  searchParams,
+}: {
+  searchParams: Promise<{ service?: string }>;
+}) {
+  const { service } = await searchParams;
+  const continueHref = service ? `/book-and-pay?service=${service}` : "/book-and-pay";
   return (
     <>
       <section className="py-16 md:py-24 px-4 md:px-16 max-w-[1280px] mx-auto text-center">
@@ -48,7 +54,7 @@ export default function BookAndPayPageFi() {
                 Varausjärjestelmämme on tällä hetkellä saatavilla englanniksi. Voit silti valita
                 ajan ja maksaa turvallisesti — kieli vaihtuu vain lomakkeen teksteissä.
               </p>
-              <Link href="/book-and-pay" className="inline-block bg-primary text-on-primary px-8 py-3 rounded-full text-label-lg hover:bg-primary-container hover:text-on-primary-container transition-all duration-500 hover:scale-105">
+              <Link href={continueHref} className="inline-block bg-primary text-on-primary px-8 py-3 rounded-full text-label-lg hover:bg-primary-container hover:text-on-primary-container transition-all duration-500 hover:scale-105">
                 Jatka varaukseen
               </Link>
             </div>

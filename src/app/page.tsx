@@ -152,11 +152,6 @@ export default async function HomePage() {
                     i === 1 ? "border-2 border-primary/10" : ""
                   }`}
                 >
-                  {i === 1 && (
-                    <span className="absolute top-4 right-4 z-10 bg-primary text-on-primary text-label-md px-3 py-1 rounded-full">
-                      Most Popular
-                    </span>
-                  )}
                   {serviceImages[service.slug] ? (
                     <Photo
                       src={serviceImages[service.slug]}
@@ -242,7 +237,7 @@ export default async function HomePage() {
                   return (
                     <div
                       key={v.title}
-                      className="bg-secondary-container p-6 md:p-8 rounded-xl transition-all duration-500 hover:scale-[1.03]"
+                      className="bg-primary-fixed p-6 md:p-8 rounded-xl transition-all duration-500 hover:scale-[1.03]"
                     >
                       <Icon className="text-primary mb-4" size={32} strokeWidth={1.5} />
                       <h4 className="font-display text-headline-sm text-primary mb-2">
@@ -259,7 +254,7 @@ export default async function HomePage() {
                   return (
                     <div
                       key={v.title}
-                      className="bg-tertiary-fixed p-6 md:p-8 rounded-xl transition-all duration-500 hover:scale-[1.03]"
+                      className="bg-primary-fixed-dim p-6 md:p-8 rounded-xl transition-all duration-500 hover:scale-[1.03]"
                     >
                       <Icon className="text-primary mb-4" size={32} strokeWidth={1.5} />
                       <h4 className="font-display text-headline-sm text-primary mb-2">
@@ -289,11 +284,17 @@ export default async function HomePage() {
               </ul>
               <Link
                 href="/about-us"
-                className="inline-block w-full sm:w-auto bg-primary text-on-primary px-10 py-4 rounded-full text-label-lg hover:bg-primary-container hover:text-on-primary-container transition-all duration-500 hover:scale-105 active:scale-95 text-center"
+                className="hidden lg:inline-block w-full sm:w-auto bg-primary text-on-primary px-10 py-4 rounded-full text-label-lg hover:bg-primary-container hover:text-on-primary-container transition-all duration-500 hover:scale-105 active:scale-95 text-center"
               >
                 Learn more about our approach
               </Link>
             </div>
+            <Link
+              href="/about-us"
+              className="order-3 lg:hidden w-full bg-primary text-on-primary px-10 py-4 rounded-full text-label-lg hover:bg-primary-container hover:text-on-primary-container transition-all duration-500 active:scale-95 text-center"
+            >
+              Learn more about our approach
+            </Link>
           </div>
         </section>
       </Reveal>
@@ -305,7 +306,7 @@ export default async function HomePage() {
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:items-center">
               <div className="lg:col-span-7 order-2 lg:order-1">
                 <LocationMap
-                  className="h-[300px] sm:h-[400px] lg:h-[500px] rounded-2xl border border-surface-variant w-full"
+                  className="h-[300px] sm:h-[400px] lg:h-[500px] rounded-2xl border-2 border-deep-green w-full"
                 />
               </div>
               <div className="lg:col-span-5 flex flex-col justify-center space-y-8 md:space-y-12 order-1 lg:order-2">
@@ -363,21 +364,21 @@ export default async function HomePage() {
       {/* Online Sessions */}
       <Reveal>
         <section className="py-[clamp(60px,10vw,120px)] px-4 md:px-16 max-w-[1280px] mx-auto">
-          <div className="bg-primary-container rounded-3xl overflow-hidden grid grid-cols-1 lg:grid-cols-2">
+          <div className="bg-deep-green rounded-3xl overflow-hidden grid grid-cols-1 lg:grid-cols-2">
             <div className="p-8 md:p-12 lg:p-20 flex flex-col justify-center space-y-6 md:space-y-8">
-              <h2 className="font-display text-headline-lg text-primary-fixed">
+              <h2 className="font-display text-headline-lg text-on-deep-green">
                 Online Sessions
               </h2>
-              <p className="font-body text-on-primary-container text-body-lg">
+              <p className="font-body text-on-deep-green/80 text-body-lg">
                 Therapy that meets you wherever you are — flexible, private, and secure.
               </p>
               <div className="flex items-start gap-4">
-                <Laptop className="text-primary-fixed mt-1 flex-shrink-0" size={24} />
+                <Laptop className="text-on-deep-green mt-1 flex-shrink-0" size={24} />
                 <div>
-                  <h4 className="text-label-lg text-white mb-1">
+                  <h4 className="text-label-lg text-on-deep-green mb-1">
                     Your safe space, just a click away
                   </h4>
-                  <p className="text-on-primary-container text-body-md">
+                  <p className="text-on-deep-green/80 text-body-md">
                     No extra software needed — join securely from your browser once your session
                     is booked.
                   </p>

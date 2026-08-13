@@ -12,9 +12,9 @@
   --color-surface-container-high: #e9dfc9;
   --color-surface-container-highest: #e2d7bd;
 
-  --color-on-background: #3d4a1f;
-  --color-on-surface: #3d4a1f;
-  --color-on-surface-variant: #5b6a34;
+  --color-on-background: #16241c;
+  --color-on-surface: #16241c;
+  --color-on-surface-variant: #223428;
 
   --color-primary: #4b5320;
   --color-on-primary: #ffffff;
@@ -24,6 +24,13 @@
   --color-primary-fixed-dim: #abcfba;
   --color-on-primary-fixed: #002114;
   --color-on-primary-fixed-variant: #2d4d3d;
+
+  /* Deep petrol-green accent for call-out sections (Online Sessions,
+     Contact, map) — deliberately distinct from --color-primary's olive so
+     these sections read as a separate, richer accent rather than more of
+     the same green used for buttons/links everywhere else. */
+  --color-deep-green: #0f2019;
+  --color-on-deep-green: #f3eee1;
 
   --color-secondary: #625e54;
   --color-on-secondary: #ffffff;
@@ -84,6 +91,8 @@
   --color-primary-fixed-dim: var(--color-primary-fixed-dim);
   --color-on-primary-fixed: var(--color-on-primary-fixed);
   --color-on-primary-fixed-variant: var(--color-on-primary-fixed-variant);
+  --color-deep-green: var(--color-deep-green);
+  --color-on-deep-green: var(--color-on-deep-green);
   --color-secondary: var(--color-secondary);
   --color-on-secondary: var(--color-on-secondary);
   --color-secondary-container: var(--color-secondary-container);
@@ -207,13 +216,15 @@
   --color-surface-container: #f0e8d6;
   --color-surface-container-high: #e9dfc9;
   --color-surface-container-highest: #e2d7bd;
-  --color-on-background: #3d4a1f;
-  --color-on-surface: #3d4a1f;
-  --color-on-surface-variant: #5b6a34;
+  --color-on-background: #16241c;
+  --color-on-surface: #16241c;
+  --color-on-surface-variant: #223428;
   --color-primary: #4b5320;
   --color-on-primary: #ffffff;
   --color-primary-container: #6b7a3a;
   --color-on-primary-container: #eff1de;
+  --color-deep-green: #0f2019;
+  --color-on-deep-green: #f3eee1;
 }
 
 @media (prefers-reduced-motion: reduce) {

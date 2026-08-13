@@ -49,12 +49,16 @@ function formatMonthLabel(dateStr: string) {
 export default function BookingRequestForm({
   services,
   slots,
+  initialServiceSlug,
 }: {
   services: Service[];
   slots: SlotWithService[];
+  initialServiceSlug?: string;
 }) {
   const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
-  const [serviceId, setServiceId] = useState(services[0]?.id ?? "");
+  const [serviceId, setServiceId] = useState(
+    services.find((s) => s.slug === initialServiceSlug)?.id ?? services[0]?.id ?? ""
+  );
   const [monthStart, setMonthStart] = useState(() => {
     const today = dateToHelsinkiDateStr(new Date());
     return `${today.slice(0, 7)}-01`;
@@ -150,6 +154,9 @@ export default function BookingRequestForm({
     }
   }
 
+  const currentStep = showGeneralForm || slotId ? 3 : selectedDate ? 2 : 1;
+  const steps = ["Choose session type", "Pick a time", "Your details"];
+
   if (status === "sent") {
     return (
       <div className="bg-surface-container-lowest p-6 rounded-2xl service-card-shadow text-center">
@@ -166,6 +173,37 @@ export default function BookingRequestForm({
       onSubmit={handleSubmit}
       className="bg-surface-container-lowest p-6 rounded-2xl service-card-shadow space-y-5"
     >
+      <div className="flex items-center gap-2 pb-1">
+        {steps.map((label, i) => {
+          const stepNum = i + 1;
+          const done = stepNum < currentStep;
+          const active = stepNum === currentStep;
+          return (
+            <div key={label} className="flex items-center gap-2 flex-1 last:flex-initial">
+              <div className="flex items-center gap-2">
+                <span
+                  className={`flex items-center justify-center w-6 h-6 rounded-full text-xs shrink-0 ${
+                    done || active
+                      ? "bg-deep-green text-on-deep-green"
+                      : "bg-surface-container-high text-on-surface-variant/60"
+                  }`}
+                >
+                  {stepNum}
+                </span>
+                <span
+                  className={`text-xs hidden sm:inline whitespace-nowrap ${
+                    active ? "text-deep-green font-medium" : "text-on-surface-variant/70"
+                  }`}
+                >
+                  {label}
+                </span>
+              </div>
+              {stepNum < steps.length && <div className="flex-1 h-px bg-outline-variant/60 mx-1" />}
+            </div>
+          );
+        })}
+      </div>
+
       {!showGeneralForm && (
         <>
           <div className="flex flex-wrap gap-2">

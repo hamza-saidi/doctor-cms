@@ -16,7 +16,12 @@ export async function generateMetadata(): Promise<Metadata> {
 // Slot availability must always be fresh to avoid double-booking.
 export const dynamic = "force-dynamic";
 
-export default async function BookAndPayPage() {
+export default async function BookAndPayPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ service?: string }>;
+}) {
+  const { service: initialServiceSlug } = await searchParams;
   const [services, packages, slots] = await Promise.all([
     prisma.service.findMany({ where: { status: "available" }, orderBy: { sortOrder: "asc" } }),
     prisma.package.findMany({ where: { fee: { not: null } }, orderBy: { sortOrder: "asc" } }),
@@ -90,7 +95,7 @@ export default async function BookAndPayPage() {
                   ? "Choose an open slot below, or leave it unselected and we'll coordinate a time by email."
                   : "No open slots are published yet — send a request and we'll coordinate a time by email."}
               </p>
-              <BookingRequestForm services={services} slots={slots} />
+              <BookingRequestForm services={services} slots={slots} initialServiceSlug={initialServiceSlug} />
             </div>
           </div>
         </section>
