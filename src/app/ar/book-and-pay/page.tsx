@@ -28,7 +28,7 @@ export default async function BookAndPayPageAr({
   return (
     <>
       <section className="py-16 md:py-24 px-4 md:px-16 max-w-[1280px] mx-auto text-center">
-        <h1 className="font-display text-headline-lg text-primary mb-4">احجزي جلستك</h1>
+        <h1 className="font-display text-headline-lg text-primary mb-4">احجز جلستك</h1>
         <p className="text-on-surface-variant text-body-lg max-w-2xl mx-auto">
           سيتم مراجعة طلب الحجز، وستصلك رسالة تأكيد عبر البريد الإلكتروني تتضمن رابط دفع آمن.
           يُعدّ الموعد مؤكدًا فقط بعد إتمام عملية الدفع.

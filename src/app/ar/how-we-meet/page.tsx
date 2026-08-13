@@ -69,7 +69,7 @@ export default function HowWeMeetPageAr() {
                 <h4 className="text-label-lg text-primary uppercase tracking-widest mb-1">كيف تعمل</h4>
                 <p className="text-body-md text-on-surface-variant">
                   بعد حجز جلستك، ستصلك رسالة عبر البريد الإلكتروني تحتوي على رابط آمن مع خطوات
-                  واضحة للانضمام. يمكنك اختيار ما إذا كنت تريدين إبقاء الكاميرا في وضع التشغيل.
+                  واضحة للانضمام. يمكنك اختيار ما إذا كنت تريد إبقاء الكاميرا في وضع التشغيل أو الإيقاف، أيهما أكثر راحة لك.
                 </p>
               </div>
               <div className="mt-4">
@@ -100,7 +100,7 @@ export default function HowWeMeetPageAr() {
             <span className="text-label-lg">جاهزون عندما تكونين مستعدة</span>
           </div>
           <Link href="/ar/book-and-pay" className="inline-block bg-primary text-on-primary px-10 py-4 rounded-full text-label-lg hover:bg-primary-container hover:text-on-primary-container transition-all duration-500 hover:scale-105">
-            احجزي جلسة
+            احجز جلسة
           </Link>
         </section>
       </Reveal>

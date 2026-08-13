@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Menu, X } from "lucide-react";
@@ -38,7 +39,8 @@ export default function Header() {
       }`}
     >
       <nav className="flex justify-between items-center h-20 px-4 md:px-16 max-w-[1280px] mx-auto">
-        <Link href={prefix || "/"} className="font-display text-headline-sm text-primary">
+        <Link href={prefix || "/"} className="flex items-center gap-2 font-display text-headline-sm text-primary">
+          <Image src="/images/wellsight-logo.png" alt="" width={32} height={32} className="h-8 w-8" priority />
           WellSight
         </Link>
 

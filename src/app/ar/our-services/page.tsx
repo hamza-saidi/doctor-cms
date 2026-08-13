@@ -141,11 +141,11 @@ export default function OurServicesPageAr() {
                 {service.available ? (
                   <Link href={`/ar/book-and-pay?service=${englishSlugs[service.slug] ?? ""}`} className="inline-flex items-center gap-2 bg-primary text-on-primary px-8 py-3 rounded-full text-label-lg hover:bg-primary-container hover:text-on-primary-container transition-all duration-500 hover:scale-105">
                     <CheckCircle2 size={18} />
-                    احجزي الآن
+                    احجز الآن
                   </Link>
                 ) : (
                   <button className="border-2 border-outline text-outline px-8 py-3 rounded-full text-label-lg cursor-not-allowed" disabled>
-                    سجّلي اهتمامك
+                    سجّل اهتمامك
                   </button>
                 )}
               </div>

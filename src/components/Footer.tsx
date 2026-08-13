@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { Mail, MapPin } from "lucide-react";
 import { business } from "@/lib/content";
@@ -18,7 +19,10 @@ export default function Footer() {
     <footer className="w-full pt-16 md:pt-24 pb-8 md:pb-12 bg-surface-container">
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-12 px-4 md:px-16 max-w-[1280px] mx-auto">
         <div className="space-y-6">
-          <div className="font-display text-headline-md text-primary">{business.name}</div>
+          <div className="flex items-center gap-2 font-display text-headline-md text-primary">
+            <Image src="/images/wellsight-logo.png" alt="" width={36} height={36} className="h-9 w-9" />
+            {business.name}
+          </div>
           <p className="text-on-surface-variant text-body-md opacity-80 max-w-xs">
             {business.tagline}
           </p>

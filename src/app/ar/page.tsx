@@ -44,7 +44,7 @@ export default function HomePageAr() {
             </p>
             <div className="flex flex-col sm:flex-row gap-4">
               <Link href="/ar/book-and-pay" className="bg-white text-on-primary-fixed px-8 py-4 rounded-full text-label-lg shadow-lg hover:shadow-xl hover:scale-105 transition-all duration-500 text-center">
-                احجزي جلستك
+                احجز جلستك
               </Link>
               <Link href="/ar/about-us" className="border border-white/40 backdrop-blur-sm text-white px-8 py-4 rounded-full text-label-lg hover:bg-white/20 hover:scale-105 transition-all duration-500 text-center">
                 نبذة عنا
@@ -127,7 +127,7 @@ export default function HomePageAr() {
                 </div>
                 <div className="p-6 md:p-8 pt-0 mt-auto">
                   <Link href="/ar/book-and-pay" className="block w-full text-center py-3 rounded-full text-label-lg bg-primary text-on-primary hover:bg-primary-container hover:text-on-primary-container transition-all duration-500">
-                    احجزي جلسة علاجية
+                    احجز جلسة علاجية
                   </Link>
                 </div>
               </div>
@@ -230,11 +230,11 @@ export default function HomePageAr() {
               <div className="flex items-start gap-4">
                 <Laptop className="text-on-deep-green mt-1 flex-shrink-0" size={24} />
                 <p className="text-on-deep-green/80 text-body-md">
-                  لا حاجة إلى برامج إضافية — انضمي مباشرةً من متصفحك بعد الحجز.
+                  لا حاجة إلى برامج إضافية — انضم مباشرةً من متصفحك بعد الحجز.
                 </p>
               </div>
               <Link href="/ar/how-we-meet" className="inline-block w-full sm:w-auto bg-primary-fixed text-on-primary-fixed px-10 py-4 rounded-full text-label-lg hover:bg-white hover:scale-105 transition-all duration-500 text-center">
-                احجزي جلسة أونلاين
+                احجز جلسة أونلاين
               </Link>
             </div>
             <Photo

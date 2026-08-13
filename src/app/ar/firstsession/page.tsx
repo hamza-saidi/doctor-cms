@@ -60,7 +60,7 @@ export default function FirstSessionPageAr() {
                 هي مساحتك لمشاركة قصتك بالسرعة التي تناسبك وبكلماتك الخاصة.
               </p>
               <p>
-                لا تحتاجين إلى إعداد كلمات مثالية أو تفسيرات دقيقة، فتركيزي منصبّ على أن أكون
+                لا تحتاج إلى إعداد كلمات مثالية أو تفسيرات دقيقة، فتركيزي منصبّ على أن أكون
                 حاضرة معك بالكامل، وأساعدك على التأمل والتفكير.
               </p>
               <p>
@@ -84,7 +84,7 @@ export default function FirstSessionPageAr() {
             مستعدة لاتخاذ الخطوة الأولى؟
           </h2>
           <Link href="/ar/book-and-pay" className="inline-block bg-primary text-on-primary px-10 py-4 rounded-full text-label-lg hover:bg-primary-container hover:text-on-primary-container transition-all duration-500 hover:scale-105">
-            احجزي جلسة
+            احجز جلسة
           </Link>
         </section>
       </Reveal>
