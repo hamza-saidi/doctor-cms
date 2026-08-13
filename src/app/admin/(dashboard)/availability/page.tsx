@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { ensureSlotsGenerated } from "@/lib/availability";
+import { ensureSlotsGenerated, dateToHelsinkiDateStr } from "@/lib/availability";
 import {
   createSlot,
   deleteSlot,
@@ -39,15 +39,20 @@ function formatDayRange(days: number[]): string {
   return ranges.join(", ");
 }
 
-function formatDateTime(date: Date) {
+function formatTimeOnly(date: Date) {
   return new Intl.DateTimeFormat("en-GB", {
-    weekday: "short",
-    day: "2-digit",
-    month: "short",
     hour: "2-digit",
     minute: "2-digit",
     timeZone: "Europe/Helsinki",
   }).format(date);
+}
+
+function formatDayHeading(dateStr: string) {
+  return new Intl.DateTimeFormat("en-GB", {
+    weekday: "short",
+    day: "2-digit",
+    month: "short",
+  }).format(new Date(`${dateStr}T12:00:00Z`));
 }
 
 function formatDateOnly(dateStr: string) {
@@ -432,35 +437,48 @@ export default async function AdminAvailabilityPage({
       {slots.length === 0 && (
         <p className="text-on-surface-variant text-sm">No upcoming slots yet.</p>
       )}
+      {slots.length > 0 && (
+        <p className="text-on-surface-variant text-sm mb-4">
+          {slots.filter((s) => !s.isBooked).length} open · {slots.filter((s) => s.isBooked).length} booked,
+          next 8 weeks
+        </p>
+      )}
       <div className="space-y-3">
-        {slots.map((slot) => (
-          <div
-            key={slot.id}
-            className="bg-surface-container-lowest rounded-xl p-4 service-card-shadow flex items-center justify-between gap-4"
-          >
-            <div>
-              <p className="text-on-surface font-medium">{formatDateTime(slot.startsAt)}</p>
-              <p className="text-on-surface-variant text-sm">
-                {slot.service.name} · {slot.format}
-              </p>
-            </div>
-            <div className="flex items-center gap-3">
-              <span
-                className={`text-xs px-3 py-1 rounded-full ${
-                  slot.isBooked
-                    ? "bg-primary-container text-primary-fixed"
-                    : "bg-secondary-container text-on-secondary-container"
-                }`}
-              >
-                {slot.isBooked ? "Booked" : "Open"}
-              </span>
-              {!slot.isBooked && (
-                <form action={deleteSlot.bind(null, slot.id)}>
-                  <button type="submit" className="text-error text-sm hover:underline">
-                    Remove
-                  </button>
-                </form>
-              )}
+        {Object.entries(
+          slots.reduce<Record<string, typeof slots>>((groups, slot) => {
+            const dateStr = dateToHelsinkiDateStr(slot.startsAt);
+            (groups[dateStr] ??= []).push(slot);
+            return groups;
+          }, {})
+        ).map(([dateStr, daySlots]) => (
+          <div key={dateStr} className="bg-surface-container-lowest rounded-xl p-4 service-card-shadow">
+            <p className="text-on-surface font-medium text-sm mb-2">{formatDayHeading(dateStr)}</p>
+            <div className="flex flex-wrap gap-2">
+              {daySlots.map((slot) => (
+                <div
+                  key={slot.id}
+                  className={`flex items-center gap-1.5 pl-3 pr-1.5 py-1 rounded-full text-xs ${
+                    slot.isBooked
+                      ? "bg-primary-container text-primary-fixed"
+                      : "bg-secondary-container text-on-secondary-container"
+                  }`}
+                  title={`${slot.service.name} · ${slot.format}`}
+                >
+                  <span>{formatTimeOnly(slot.startsAt)}</span>
+                  <span className="opacity-70">{slot.service.name}</span>
+                  {!slot.isBooked && (
+                    <form action={deleteSlot.bind(null, slot.id)}>
+                      <button
+                        type="submit"
+                        aria-label="Remove slot"
+                        className="w-4 h-4 flex items-center justify-center rounded-full hover:bg-error hover:text-on-error transition-colors"
+                      >
+                        ×
+                      </button>
+                    </form>
+                  )}
+                </div>
+              ))}
             </div>
           </div>
         ))}
