@@ -150,63 +150,12 @@
   --text-label-md--font-weight: 500;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --color-background: #12140f;
-    --color-surface: #12140f;
-    --color-surface-bright: #383a34;
-    --color-surface-dim: #12140f;
-    --color-surface-variant: #424844;
-    --color-surface-container-lowest: #0c0f0a;
-    --color-surface-container-low: #1b1c17;
-    --color-surface-container: #1f211b;
-    --color-surface-container-high: #292b25;
-    --color-surface-container-highest: #343630;
-
-    --color-on-background: #e3e3dd;
-    --color-on-surface: #e3e3dd;
-    --color-on-surface-variant: #c1c8c2;
-
-    --color-primary: #9cc0ab;
-    --color-on-primary: #00382a;
-    --color-primary-container: #2f4f3f;
-    --color-on-primary-container: #b8dcc7;
-
-    --color-secondary: #ccc6b9;
-    --color-on-secondary: #34302a;
-    --color-secondary-container: #4a463d;
-    --color-on-secondary-container: #e9e2d4;
-
-    --color-tertiary: #cbc6ba;
-    --color-on-tertiary: #34322a;
-    --color-tertiary-container: #4b493f;
-    --color-on-tertiary-container: #e7e2d5;
-
-    --color-outline: #8c938c;
-    --color-outline-variant: #424844;
-
-    --color-inverse-surface: #e3e3dd;
-    --color-inverse-on-surface: #1b1b1b;
-    --color-inverse-primary: #2f4f3f;
-  }
-}
-
-:root[data-theme="dark"] {
-  --color-background: #12140f;
-  --color-surface: #12140f;
-  --color-surface-container-lowest: #0c0f0a;
-  --color-surface-container-low: #1b1c17;
-  --color-surface-container: #1f211b;
-  --color-surface-container-high: #292b25;
-  --color-surface-container-highest: #343630;
-  --color-on-background: #e3e3dd;
-  --color-on-surface: #e3e3dd;
-  --color-on-surface-variant: #c1c8c2;
-  --color-primary: #9cc0ab;
-  --color-on-primary: #00382a;
-  --color-primary-container: #2f4f3f;
-  --color-on-primary-container: #b8dcc7;
-}
+/* Dark mode is intentionally not supported — the site always renders the
+   light/beige theme regardless of OS or browser color-scheme preference.
+   (Previously had a `prefers-color-scheme: dark` override here plus a
+   `[data-theme="dark"]` variant for a manual toggle that was never built;
+   neither should come back without an explicit decision to re-add dark
+   mode.) */
 
 :root[data-theme="light"] {
   --color-background: #f3eee1;
