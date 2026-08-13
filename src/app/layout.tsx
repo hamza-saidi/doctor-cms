@@ -5,6 +5,7 @@ import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import StickyBookCta from "@/components/StickyBookCta";
 import WhatsAppButton from "@/components/WhatsAppButton";
+import LangDirSync from "@/components/LangDirSync";
 import { LocalBusinessJsonLd } from "@/components/JsonLd";
 import { business } from "@/lib/content";
 
@@ -89,6 +90,7 @@ export default function RootLayout({
         <script dangerouslySetInnerHTML={{ __html: setLangDirScript }} />
       </head>
       <body className="min-h-full flex flex-col bg-background text-on-surface font-body selection:bg-primary-fixed selection:text-primary overflow-x-hidden">
+        <LangDirSync />
         <LocalBusinessJsonLd />
         <Header />
         <main className="flex-1">{children}</main>
