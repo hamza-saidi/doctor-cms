@@ -140,7 +140,7 @@ export default function HomePageAr() {
         <section className="py-[clamp(60px,10vw,120px)] px-4 md:px-16 max-w-[1280px] mx-auto overflow-hidden">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-24 items-center">
             <div className="space-y-6 md:space-y-8">
-              <h2 className="font-display text-headline-lg text-primary">لماذا WellSight؟</h2>
+              <h2 className="font-display text-headline-lg text-primary">لماذا WellSight‏؟</h2>
               <ul className="space-y-4">
                 {["السرّية أساس رعايتنا", "جلسات حضورية أو عبر الإنترنت", "بيئة آمنة وشاملة ترحّب بالجميع"].map((item) => (
                   <li key={item} className="flex items-center gap-3 text-label-lg text-primary">
