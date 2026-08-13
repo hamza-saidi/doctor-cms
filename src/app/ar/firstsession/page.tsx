@@ -78,19 +78,21 @@ export default function FirstSessionPageAr() {
       </section>
 
       <Reveal>
-        <section className="py-16 md:py-24 px-4 md:px-16 max-w-[1280px] mx-auto text-center">
-          <HeartHandshake className="text-primary mx-auto mb-4" size={32} />
-          <h2 className="font-display text-headline-md text-primary mb-6">
-            مستعدة لاتخاذ الخطوة الأولى؟
-          </h2>
-          <Link href="/ar/book-and-pay" className="inline-block bg-primary text-on-primary px-10 py-4 rounded-full text-label-lg hover:bg-primary-container hover:text-on-primary-container transition-all duration-500 hover:scale-105">
-            احجز جلسة
-          </Link>
+        <section className="bg-surface-container py-16 md:py-24 px-4 md:px-16">
+          <div className="max-w-[1280px] mx-auto text-center">
+            <HeartHandshake className="text-primary mx-auto mb-4" size={32} />
+            <h2 className="font-display text-headline-md text-primary mb-6">
+              مستعدة لاتخاذ الخطوة الأولى؟
+            </h2>
+            <Link href="/ar/book-and-pay" className="inline-block bg-primary text-on-primary px-10 py-4 rounded-full text-label-lg hover:bg-primary-container hover:text-on-primary-container transition-all duration-500 hover:scale-105">
+              احجز جلسة
+            </Link>
+          </div>
         </section>
       </Reveal>
 
       <Reveal>
-        <section className="bg-surface-container py-16 md:py-24 px-4 md:px-16">
+        <section className="py-16 md:py-24 px-4 md:px-16">
           <div className="max-w-[1280px] mx-auto">
             <h2 className="font-display text-headline-md text-primary mb-10 text-center">
               المعتقدات
