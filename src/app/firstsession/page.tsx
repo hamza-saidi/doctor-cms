@@ -57,17 +57,6 @@ export default function FirstSessionPage() {
       </section>
 
       <Reveal>
-        <section className="bg-surface-container py-16 md:py-24 px-4 md:px-16">
-          <div className="max-w-[1280px] mx-auto">
-            <h2 className="font-display text-headline-md text-primary mb-10 text-center">
-              Common Misunderstandings about Therapy
-            </h2>
-            <Misunderstandings items={misunderstandings} />
-          </div>
-        </section>
-      </Reveal>
-
-      <Reveal>
         <section className="py-16 md:py-24 px-4 md:px-16 max-w-[1280px] mx-auto text-center">
           <HeartHandshake className="text-primary mx-auto mb-4" size={32} />
           <h2 className="font-display text-headline-md text-primary mb-6">
@@ -79,6 +68,17 @@ export default function FirstSessionPage() {
           >
             Book a Session
           </Link>
+        </section>
+      </Reveal>
+
+      <Reveal>
+        <section className="bg-surface-container py-16 md:py-24 px-4 md:px-16">
+          <div className="max-w-[1280px] mx-auto">
+            <h2 className="font-display text-headline-md text-primary mb-10 text-center">
+              Common Misunderstandings about Therapy
+            </h2>
+            <Misunderstandings items={misunderstandings} />
+          </div>
         </section>
       </Reveal>
     </>

@@ -80,17 +80,6 @@ export default function FirstSessionPageFi() {
       </section>
 
       <Reveal>
-        <section className="bg-surface-container py-16 md:py-24 px-4 md:px-16">
-          <div className="max-w-[1280px] mx-auto">
-            <h2 className="font-display text-headline-md text-primary mb-10 text-center">
-              Yleisiä väärinkäsityksiä terapiasta
-            </h2>
-            <Misunderstandings items={misunderstandingsFi} />
-          </div>
-        </section>
-      </Reveal>
-
-      <Reveal>
         <section className="py-16 md:py-24 px-4 md:px-16 max-w-[1280px] mx-auto text-center">
           <HeartHandshake className="text-primary mx-auto mb-4" size={32} />
           <h2 className="font-display text-headline-md text-primary mb-6">
@@ -99,6 +88,17 @@ export default function FirstSessionPageFi() {
           <Link href="/fi/book-and-pay" className="inline-block bg-primary text-on-primary px-10 py-4 rounded-full text-label-lg hover:bg-primary-container hover:text-on-primary-container transition-all duration-500 hover:scale-105">
             Varaa aika
           </Link>
+        </section>
+      </Reveal>
+
+      <Reveal>
+        <section className="bg-surface-container py-16 md:py-24 px-4 md:px-16">
+          <div className="max-w-[1280px] mx-auto">
+            <h2 className="font-display text-headline-md text-primary mb-10 text-center">
+              Yleisiä väärinkäsityksiä terapiasta
+            </h2>
+            <Misunderstandings items={misunderstandingsFi} />
+          </div>
         </section>
       </Reveal>
     </>
