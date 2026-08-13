@@ -2,6 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { updateBookingStatus } from "./actions";
 import PaymentLinkButton from "@/components/admin/PaymentLinkButton";
 
+const PAGE_SIZE = 15;
 const STATUSES = ["pending", "confirmed", "completed", "no-show", "cancelled"] as const;
 const STATUS_LABELS: Record<string, string> = {
   pending: "Pending",
@@ -22,10 +23,11 @@ function formatDateTime(date: Date | null) {
   }).format(date);
 }
 
-function buildHref(status: string | undefined, q: string | undefined) {
+function buildHref(status: string | undefined, q: string | undefined, page?: number) {
   const params = new URLSearchParams();
   if (status) params.set("status", status);
   if (q) params.set("q", q);
+  if (page && page > 1) params.set("page", String(page));
   const qs = params.toString();
   return qs ? `/admin/bookings?${qs}` : "/admin/bookings";
 }
@@ -33,9 +35,9 @@ function buildHref(status: string | undefined, q: string | undefined) {
 export default async function AdminBookingsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ status?: string; q?: string }>;
+  searchParams: Promise<{ status?: string; q?: string; page?: string }>;
 }) {
-  const { status: statusFilter, q } = await searchParams;
+  const { status: statusFilter, q, page: pageParam } = await searchParams;
 
   const allBookings = await prisma.booking.findMany({
     include: { service: true, slot: true },
@@ -56,11 +58,15 @@ export default async function AdminBookingsPage({
   const counts = Object.fromEntries(STATUSES.map((s) => [s, allBookings.filter((b) => b.status === s).length]));
 
   const needle = (q ?? "").trim().toLowerCase();
-  const bookings = allBookings.filter((b) => {
+  const filteredBookings = allBookings.filter((b) => {
     if (statusFilter && b.status !== statusFilter) return false;
     if (needle && !b.name.toLowerCase().includes(needle) && !b.email.toLowerCase().includes(needle)) return false;
     return true;
   });
+
+  const totalPages = Math.max(1, Math.ceil(filteredBookings.length / PAGE_SIZE));
+  const page = Math.min(Math.max(1, Number(pageParam) || 1), totalPages);
+  const bookings = filteredBookings.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
   return (
     <div className="max-w-4xl">
@@ -68,7 +74,7 @@ export default async function AdminBookingsPage({
 
       <div className="flex flex-wrap items-center gap-2 mb-4">
         <a
-          href={buildHref(undefined, q)}
+          href={buildHref(undefined, q, 1)}
           className={`px-3 py-1.5 rounded-full text-sm transition-colors ${
             !statusFilter
               ? "bg-primary text-on-primary"
@@ -80,7 +86,7 @@ export default async function AdminBookingsPage({
         {STATUSES.map((s) => (
           <a
             key={s}
-            href={buildHref(s, q)}
+            href={buildHref(s, q, 1)}
             className={`px-3 py-1.5 rounded-full text-sm transition-colors ${
               statusFilter === s
                 ? "bg-primary text-on-primary"
@@ -109,9 +115,15 @@ export default async function AdminBookingsPage({
         </button>
       </form>
 
-      {bookings.length === 0 && (
+      {filteredBookings.length === 0 && (
         <p className="text-on-surface-variant text-sm">
           {allBookings.length === 0 ? "No booking requests yet." : "No bookings match this filter."}
+        </p>
+      )}
+      {filteredBookings.length > 0 && (
+        <p className="text-on-surface-variant text-sm mb-4">
+          Showing {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, filteredBookings.length)} of{" "}
+          {filteredBookings.length}
         </p>
       )}
 
@@ -167,6 +179,36 @@ export default async function AdminBookingsPage({
           </div>
         ))}
       </div>
+
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between mt-6">
+          <a
+            href={buildHref(statusFilter, q, page - 1)}
+            aria-disabled={page <= 1}
+            className={`px-4 py-2 rounded-full text-sm border border-outline-variant transition-colors ${
+              page <= 1
+                ? "opacity-40 pointer-events-none"
+                : "text-on-surface-variant hover:border-primary"
+            }`}
+          >
+            ← Previous
+          </a>
+          <p className="text-on-surface-variant text-sm">
+            Page {page} of {totalPages}
+          </p>
+          <a
+            href={buildHref(statusFilter, q, page + 1)}
+            aria-disabled={page >= totalPages}
+            className={`px-4 py-2 rounded-full text-sm border border-outline-variant transition-colors ${
+              page >= totalPages
+                ? "opacity-40 pointer-events-none"
+                : "text-on-surface-variant hover:border-primary"
+            }`}
+          >
+            Next →
+          </a>
+        </div>
+      )}
     </div>
   );
 }
