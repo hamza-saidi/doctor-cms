@@ -4,15 +4,39 @@ import {
   createSlot,
   deleteSlot,
   createRule,
-  deleteRule,
+  deleteRules,
   createBlockedDate,
   deleteBlockedDate,
+  clearUnbookedSlots,
 } from "./actions";
 
 const inputClass =
   "w-full border border-outline-variant focus:border-primary rounded-lg p-2.5 bg-surface-container-lowest text-sm";
 const labelClass = "text-label-md text-on-surface-variant uppercase tracking-widest";
 const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+const DAY_SHORT = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+// Condenses a sorted list of weekday indices into a compact label, e.g.
+// [1,2,3,4,5] -> "Mon–Fri", [1,3,5] -> "Mon, Wed, Fri", [0,1,2,5,6] ->
+// "Sun–Tue, Fri–Sat" — so a form submission covering several days
+// reads as one line instead of one row per day.
+function formatDayRange(days: number[]): string {
+  const sorted = [...new Set(days)].sort((a, b) => a - b);
+  const ranges: string[] = [];
+  let start = sorted[0];
+  let prev = sorted[0];
+  for (let i = 1; i <= sorted.length; i++) {
+    const cur = sorted[i];
+    if (cur === prev + 1) {
+      prev = cur;
+      continue;
+    }
+    ranges.push(start === prev ? DAY_SHORT[start] : `${DAY_SHORT[start]}–${DAY_SHORT[prev]}`);
+    start = cur;
+    prev = cur;
+  }
+  return ranges.join(", ");
+}
 
 function formatDateTime(date: Date) {
   return new Intl.DateTimeFormat("en-GB", {
@@ -62,28 +86,49 @@ export default async function AdminAvailabilityPage() {
         action={createRule}
         className="bg-surface-container rounded-xl p-6 space-y-4 border border-dashed border-outline-variant mb-6"
       >
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="space-y-1">
-            <label className={labelClass}>Service</label>
-            <select name="serviceId" required className={inputClass}>
-              {services.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.name}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="space-y-1">
-            <label className={labelClass}>Day of week</label>
-            <select name="dayOfWeek" required defaultValue="1" className={inputClass}>
-              {DAY_NAMES.map((name, i) => (
-                <option key={name} value={i}>
-                  {name}
-                </option>
-              ))}
-            </select>
+        <div className="space-y-1">
+          <label className={labelClass}>Services</label>
+          <div className="flex flex-wrap gap-x-5 gap-y-2 pt-1">
+            {services.map((s) => (
+              <label key={s.id} className="flex items-center gap-2 text-sm text-on-surface">
+                <input type="checkbox" name="serviceId" value={s.id} defaultChecked className="accent-primary w-4 h-4" />
+                {s.name}
+              </label>
+            ))}
           </div>
         </div>
+
+        <div className="space-y-1">
+          <div className="flex items-center justify-between">
+            <label className={labelClass}>Days</label>
+            <div className="flex gap-3">
+              <button type="button" data-day-preset="1,2,3,4,5" className="text-xs text-primary hover:underline">
+                Weekdays
+              </button>
+              <button type="button" data-day-preset="0,6" className="text-xs text-primary hover:underline">
+                Weekend
+              </button>
+              <button type="button" data-day-preset="0,1,2,3,4,5,6" className="text-xs text-primary hover:underline">
+                Every day
+              </button>
+            </div>
+          </div>
+          <div id="day-checkboxes" className="flex flex-wrap gap-x-5 gap-y-2 pt-1">
+            {DAY_NAMES.map((name, i) => (
+              <label key={name} className="flex items-center gap-2 text-sm text-on-surface">
+                <input
+                  type="checkbox"
+                  name="dayOfWeek"
+                  value={i}
+                  defaultChecked={i >= 1 && i <= 5}
+                  className="accent-primary w-4 h-4"
+                />
+                {DAY_SHORT[i]}
+              </label>
+            ))}
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
           <div className="space-y-1">
             <label className={labelClass}>From</label>
@@ -112,23 +157,56 @@ export default async function AdminAvailabilityPage() {
           Add recurring hours
         </button>
       </form>
+      <script
+        dangerouslySetInnerHTML={{
+          __html: `
+            document.querySelectorAll('[data-day-preset]').forEach(function (btn) {
+              btn.addEventListener('click', function () {
+                var days = btn.getAttribute('data-day-preset').split(',');
+                document.querySelectorAll('#day-checkboxes input[name="dayOfWeek"]').forEach(function (cb) {
+                  cb.checked = days.indexOf(cb.value) !== -1;
+                });
+              });
+            });
+            var clearSlotsForm = document.getElementById('clear-slots-form');
+            if (clearSlotsForm) {
+              clearSlotsForm.addEventListener('submit', function (e) {
+                if (!confirm('Remove all open (not yet booked) slots? Booked sessions are not affected. This cannot be undone.')) {
+                  e.preventDefault();
+                }
+              });
+            }
+          `,
+        }}
+      />
 
       {rules.length > 0 && (
         <div className="space-y-2 mb-10">
-          {rules.map((rule) => (
+          {Object.values(
+            rules.reduce<Record<string, { rule: (typeof rules)[number]; ids: string[]; days: number[] }>>(
+              (groups, rule) => {
+                const key = `${rule.serviceId}|${rule.startTime}|${rule.endTime}|${rule.durationMinutes}|${rule.format}`;
+                if (!groups[key]) groups[key] = { rule, ids: [], days: [] };
+                groups[key].ids.push(rule.id);
+                groups[key].days.push(rule.dayOfWeek);
+                return groups;
+              },
+              {}
+            )
+          ).map(({ rule, ids, days }) => (
             <div
-              key={rule.id}
+              key={ids.join(",")}
               className="bg-surface-container-lowest rounded-xl p-4 service-card-shadow flex items-center justify-between gap-4"
             >
               <div>
                 <p className="text-on-surface font-medium">
-                  {rule.service.name} · {DAY_NAMES[rule.dayOfWeek]}s, {rule.startTime}–{rule.endTime}
+                  {rule.service.name} · {formatDayRange(days)}, {rule.startTime}–{rule.endTime}
                 </p>
                 <p className="text-on-surface-variant text-sm">
                   {rule.durationMinutes}-min sessions · {rule.format}
                 </p>
               </div>
-              <form action={deleteRule.bind(null, rule.id)}>
+              <form action={deleteRules.bind(null, ids)}>
                 <button type="submit" className="text-error text-sm hover:underline">
                   Remove
                 </button>
@@ -244,7 +322,16 @@ export default async function AdminAvailabilityPage() {
         </button>
       </form>
 
-      <h2 className="font-display text-headline-sm text-primary mb-4">Upcoming slots</h2>
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="font-display text-headline-sm text-primary">Upcoming slots</h2>
+        {slots.length > 0 && (
+          <form action={clearUnbookedSlots} id="clear-slots-form">
+            <button type="submit" className="text-error text-sm hover:underline">
+              Clear all open slots
+            </button>
+          </form>
+        )}
+      </div>
       {slots.length === 0 && (
         <p className="text-on-surface-variant text-sm">No upcoming slots yet.</p>
       )}

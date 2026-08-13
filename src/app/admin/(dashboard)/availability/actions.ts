@@ -2,7 +2,13 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@/lib/prisma";
-import { helsinkiWallTimeToUtc, recordAvailabilityException, removeUnbookedSlotsOnDate } from "@/lib/availability";
+import {
+  helsinkiWallTimeToUtc,
+  dateToHelsinkiDateStr,
+  dayOfWeekFromDateStr,
+  recordAvailabilityException,
+  removeUnbookedSlotsOnDate,
+} from "@/lib/availability";
 
 export async function createSlot(formData: FormData) {
   const serviceId = String(formData.get("serviceId") ?? "");
@@ -36,24 +42,74 @@ export async function deleteSlot(id: string) {
 }
 
 export async function createRule(formData: FormData) {
-  const serviceId = String(formData.get("serviceId") ?? "");
-  const dayOfWeek = Number(formData.get("dayOfWeek"));
+  const serviceIds = formData.getAll("serviceId").map(String).filter(Boolean);
+  const dayOfWeeks = formData
+    .getAll("dayOfWeek")
+    .map(Number)
+    .filter((n) => Number.isInteger(n) && n >= 0 && n <= 6);
   const startTime = String(formData.get("startTime") ?? "");
   const endTime = String(formData.get("endTime") ?? "");
   const format = String(formData.get("format") ?? "online");
   const durationMinutes = Number(formData.get("durationMinutes") ?? 50);
 
-  if (!serviceId || !startTime || !endTime || Number.isNaN(dayOfWeek)) return;
+  if (serviceIds.length === 0 || dayOfWeeks.length === 0 || !startTime || !endTime) return;
 
-  await prisma.availabilityRule.create({
-    data: { serviceId, dayOfWeek, startTime, endTime, format, durationMinutes },
+  // One form submission can cover several days and services at once (e.g.
+  // "Mon-Fri, Therapy + Consultation") — skip any combo that already has an
+  // identical rule so re-submitting a broadened selection doesn't duplicate
+  // the ones already set up.
+  const existing = await prisma.availabilityRule.findMany({
+    where: {
+      serviceId: { in: serviceIds },
+      dayOfWeek: { in: dayOfWeeks },
+      startTime,
+      endTime,
+      format,
+      durationMinutes,
+    },
+    select: { serviceId: true, dayOfWeek: true },
   });
+  const existingKeys = new Set(existing.map((r) => `${r.serviceId}|${r.dayOfWeek}`));
+
+  const data = serviceIds.flatMap((serviceId) =>
+    dayOfWeeks
+      .filter((dayOfWeek) => !existingKeys.has(`${serviceId}|${dayOfWeek}`))
+      .map((dayOfWeek) => ({ serviceId, dayOfWeek, startTime, endTime, format, durationMinutes }))
+  );
+
+  if (data.length > 0) {
+    await prisma.availabilityRule.createMany({ data });
+  }
 
   revalidatePath("/admin/availability");
 }
 
-export async function deleteRule(id: string) {
-  await prisma.availabilityRule.delete({ where: { id } });
+export async function deleteRules(ids: string[]) {
+  const rules = await prisma.availabilityRule.findMany({ where: { id: { in: ids } } });
+  const now = new Date();
+
+  // Slots aren't linked to the rule that generated them (they're plain
+  // materialized rows), so a deleted rule would otherwise leave its
+  // already-generated future slots dangling — this finds and removes only
+  // the unbooked ones that match the rule's service/weekday/time exactly.
+  for (const rule of rules) {
+    const futureUnbooked = await prisma.availabilitySlot.findMany({
+      where: { serviceId: rule.serviceId, startsAt: { gt: now }, isBooked: false },
+      select: { id: true, startsAt: true },
+    });
+    const staleIds = futureUnbooked
+      .filter((slot) => {
+        const dateStr = dateToHelsinkiDateStr(slot.startsAt);
+        if (dayOfWeekFromDateStr(dateStr) !== rule.dayOfWeek) return false;
+        return helsinkiWallTimeToUtc(dateStr, rule.startTime).getTime() === slot.startsAt.getTime();
+      })
+      .map((slot) => slot.id);
+    if (staleIds.length > 0) {
+      await prisma.availabilitySlot.deleteMany({ where: { id: { in: staleIds } } });
+    }
+  }
+
+  await prisma.availabilityRule.deleteMany({ where: { id: { in: ids } } });
   revalidatePath("/admin/availability");
 }
 
@@ -74,5 +130,14 @@ export async function createBlockedDate(formData: FormData) {
 
 export async function deleteBlockedDate(id: string) {
   await prisma.blockedDate.delete({ where: { id } });
+  revalidatePath("/admin/availability");
+}
+
+// Bulk safety-net: wipes every not-yet-booked slot (leaves booked ones
+// untouched) so a wrong recurring-hours setup — or wanting to start the
+// schedule over from scratch — doesn't mean removing hundreds of slots
+// one at a time.
+export async function clearUnbookedSlots() {
+  await prisma.availabilitySlot.deleteMany({ where: { isBooked: false } });
   revalidatePath("/admin/availability");
 }
