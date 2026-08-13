@@ -263,11 +263,15 @@ body {
   box-shadow: 0 20px 40px -12px rgba(47, 79, 63, 0.15);
 }
 
-/* Arabic pages: Playfair Display/Inter don't cover Arabic script, so the
-   display/body font tokens are swapped to Noto Naskh/Sans Arabic. Since
-   utilities reference --font-display/--font-body via var(), redefining
-   them here cascades to every component without per-component changes. */
+/* Arabic pages: Playfair Display/Inter don't cover Arabic script, so on RTL
+   pages the underlying font variables are swapped to Noto Naskh/Sans Arabic.
+   This has to target --font-playfair/--font-inter specifically, not
+   --font-display/--font-body: Tailwind's `@theme inline` bakes
+   `font-family: var(--font-playfair)` directly into the generated
+   `.font-display` utility at build time (one level of indirection only),
+   so redefining --font-display itself downstream is a no-op for that
+   utility — it never re-reads the value at render time. */
 html[dir="rtl"] {
-  --font-display: var(--font-naskh-arabic);
-  --font-body: var(--font-sans-arabic);
+  --font-playfair: var(--font-naskh-arabic);
+  --font-inter: var(--font-sans-arabic);
 }
