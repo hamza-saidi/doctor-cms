@@ -87,7 +87,7 @@ export default function AboutUsPageAr() {
       </Reveal>
 
       <Reveal>
-        <section className="bg-primary-container py-16 md:py-24 px-4 md:px-16">
+        <section className="bg-deep-green py-16 md:py-24 px-4 md:px-16">
           <div className="max-w-[1280px] mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <Photo
               src="/images/psychologist-portrait.png"
@@ -95,24 +95,24 @@ export default function AboutUsPageAr() {
               className="aspect-square rounded-xl w-full"
             />
             <div className="space-y-6">
-              <h2 className="font-display text-headline-md text-primary-fixed">رسالتي</h2>
-              <p className="text-on-primary-container text-body-md">
+              <h2 className="font-display text-headline-md text-on-deep-green">رسالتي</h2>
+              <p className="text-on-deep-green/80 text-body-md">
                 يكمن وراء كل صراع قصة تنتظر من يفهمها، وقد قادني هذا الاعتقاد إلى إنشاء
                 WellSight. تأسست WellSight على وعد بسيط: أن تكون مساحة آمنة وداعمة لاستكشاف
                 الشفاء والعافية النفسية.
               </p>
               <div>
-                <h4 className="text-label-lg text-white mb-1 uppercase tracking-widest">
+                <h4 className="text-label-lg text-on-deep-green mb-1 uppercase tracking-widest">
                   المؤهلات العلمية والعملية
                 </h4>
-                <p className="text-on-primary-container text-body-md">
+                <p className="text-on-deep-green/80 text-body-md">
                   بكالوريوس في علم النفس | ماجستير في علم النفس العصبي | العلاج بتقنية EMDR |
                   العلاج بالتعرض المطول (PE) | العلاج المرتكز على المشاعر (EFT) للأزواج والأسر.
                 </p>
               </div>
               <div>
-                <h4 className="text-label-lg text-white mb-1 uppercase tracking-widest">اللغات</h4>
-                <p className="text-on-primary-container text-body-md">
+                <h4 className="text-label-lg text-on-deep-green mb-1 uppercase tracking-widest">اللغات</h4>
+                <p className="text-on-deep-green/80 text-body-md">
                   الخدمات باللغتين العربية والإنجليزية، مع كفاءة ثقافية عالية.
                 </p>
               </div>

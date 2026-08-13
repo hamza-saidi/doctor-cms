@@ -89,7 +89,7 @@ export default function AboutUsPageFi() {
       </Reveal>
 
       <Reveal>
-        <section className="bg-primary-container py-16 md:py-24 px-4 md:px-16">
+        <section className="bg-deep-green py-16 md:py-24 px-4 md:px-16">
           <div className="max-w-[1280px] mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <Photo
               src="/images/psychologist-portrait.png"
@@ -97,26 +97,26 @@ export default function AboutUsPageFi() {
               className="aspect-square rounded-xl w-full"
             />
             <div className="space-y-6">
-              <h2 className="font-display text-headline-md text-primary-fixed">Tehtäväni</h2>
-              <p className="text-on-primary-container text-body-md">
+              <h2 className="font-display text-headline-md text-on-deep-green">Tehtäväni</h2>
+              <p className="text-on-deep-green/80 text-body-md">
                 Jokaisen kamppailun takana on tarina, joka odottaa ymmärrystä, ja tämä usko sai
                 minut perustamaan WellSightin. WellSight perustettiin yksinkertaisen lupauksen
                 varaan: turvallinen, kannustava tila, jossa voi tutkia paranemista ja henkistä
                 hyvinvointia.
               </p>
               <div>
-                <h4 className="text-label-lg text-white mb-1 uppercase tracking-widest">
+                <h4 className="text-label-lg text-on-deep-green mb-1 uppercase tracking-widest">
                   Todistukset ja kokemus
                 </h4>
-                <p className="text-on-primary-container text-body-md">
+                <p className="text-on-deep-green/80 text-body-md">
                   Psykologian kandidaatti | Neuropsykologian maisteri | EMDR-terapia |
                   Pitkäkestoinen altistusterapia (PE) | Tunnekeskeinen terapia (EFT) pareille ja
                   perheille | Neuropsykologinen arviointi.
                 </p>
               </div>
               <div>
-                <h4 className="text-label-lg text-white mb-1 uppercase tracking-widest">Kielet</h4>
-                <p className="text-on-primary-container text-body-md">
+                <h4 className="text-label-lg text-on-deep-green mb-1 uppercase tracking-widest">Kielet</h4>
+                <p className="text-on-deep-green/80 text-body-md">
                   Palvelut arabiaksi ja englanniksi; kulttuurisensitiivinen hoito.
                 </p>
               </div>

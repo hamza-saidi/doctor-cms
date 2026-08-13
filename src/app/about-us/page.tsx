@@ -102,7 +102,7 @@ export default function AboutUsPage() {
       </Reveal>
 
       <Reveal>
-        <section id="about-the-psychologist" className="bg-primary-container py-16 md:py-24 px-4 md:px-16 scroll-mt-24">
+        <section id="about-the-psychologist" className="bg-deep-green py-16 md:py-24 px-4 md:px-16 scroll-mt-24">
           <div className="max-w-[1280px] mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <Photo
               src="/images/psychologist-portrait.png"
@@ -110,36 +110,36 @@ export default function AboutUsPage() {
               className="aspect-square rounded-xl w-full"
             />
             <div className="space-y-6">
-              <h2 className="font-display text-headline-md text-primary-fixed">
+              <h2 className="font-display text-headline-md text-on-deep-green">
                 Meet the psychologist
               </h2>
               <div>
-                <h4 className="text-label-lg text-white mb-1 uppercase tracking-widest">
+                <h4 className="text-label-lg text-on-deep-green mb-1 uppercase tracking-widest">
                   My Mission
                 </h4>
-                <p className="text-on-primary-container text-body-md">{psychologistBio.mission}</p>
+                <p className="text-on-deep-green/80 text-body-md">{psychologistBio.mission}</p>
               </div>
               <div>
-                <h4 className="text-label-lg text-white mb-1 uppercase tracking-widest">
+                <h4 className="text-label-lg text-on-deep-green mb-1 uppercase tracking-widest">
                   Credentials & Experience
                 </h4>
-                <p className="text-on-primary-container text-body-md">
+                <p className="text-on-deep-green/80 text-body-md">
                   {psychologistBio.credentials}
                 </p>
               </div>
               <div>
-                <h4 className="text-label-lg text-white mb-1 uppercase tracking-widest">
+                <h4 className="text-label-lg text-on-deep-green mb-1 uppercase tracking-widest">
                   Languages
                 </h4>
-                <p className="text-on-primary-container text-body-md">{psychologistBio.languages}</p>
+                <p className="text-on-deep-green/80 text-body-md">{psychologistBio.languages}</p>
               </div>
               <div>
-                <h4 className="text-label-lg text-white mb-2 uppercase tracking-widest">
+                <h4 className="text-label-lg text-on-deep-green mb-2 uppercase tracking-widest">
                   What to Expect
                 </h4>
                 <ul className="space-y-1">
                   {psychologistBio.expect.map((item) => (
-                    <li key={item} className="text-on-primary-container text-body-md">
+                    <li key={item} className="text-on-deep-green/80 text-body-md">
                       · {item}
                     </li>
                   ))}
