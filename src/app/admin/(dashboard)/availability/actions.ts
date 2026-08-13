@@ -84,14 +84,15 @@ export async function createRule(formData: FormData) {
   revalidatePath("/admin/availability");
 }
 
-export async function deleteRules(ids: string[]) {
+// Slots aren't linked to the rule that generated them (they're plain
+// materialized rows), so removing a rule would otherwise leave its
+// already-generated future slots dangling — this finds and removes only
+// the unbooked ones that match the rule's service/weekday/time exactly.
+async function removeRulesAndTheirSlots(ids: string[]) {
+  if (ids.length === 0) return;
   const rules = await prisma.availabilityRule.findMany({ where: { id: { in: ids } } });
   const now = new Date();
 
-  // Slots aren't linked to the rule that generated them (they're plain
-  // materialized rows), so a deleted rule would otherwise leave its
-  // already-generated future slots dangling — this finds and removes only
-  // the unbooked ones that match the rule's service/weekday/time exactly.
   for (const rule of rules) {
     const futureUnbooked = await prisma.availabilitySlot.findMany({
       where: { serviceId: rule.serviceId, startsAt: { gt: now }, isBooked: false },
@@ -110,6 +111,44 @@ export async function deleteRules(ids: string[]) {
   }
 
   await prisma.availabilityRule.deleteMany({ where: { id: { in: ids } } });
+}
+
+export async function deleteRules(ids: string[]) {
+  await removeRulesAndTheirSlots(ids);
+  revalidatePath("/admin/availability");
+}
+
+// Replaces a whole rule group (one service's set of day/time rows) with a
+// new day/time selection in one step, instead of the admin having to
+// delete the old rows and separately re-add the new ones.
+export async function updateRule(formData: FormData) {
+  const oldIds = String(formData.get("ruleIds") ?? "")
+    .split(",")
+    .filter(Boolean);
+  const serviceId = String(formData.get("serviceId") ?? "");
+  const dayOfWeeks = formData
+    .getAll("dayOfWeek")
+    .map(Number)
+    .filter((n) => Number.isInteger(n) && n >= 0 && n <= 6);
+  const startTime = String(formData.get("startTime") ?? "");
+  const endTime = String(formData.get("endTime") ?? "");
+  const format = String(formData.get("format") ?? "online");
+  const durationMinutes = Number(formData.get("durationMinutes") ?? 50);
+
+  if (!serviceId || dayOfWeeks.length === 0 || !startTime || !endTime) return;
+
+  await removeRulesAndTheirSlots(oldIds);
+  await prisma.availabilityRule.createMany({
+    data: dayOfWeeks.map((dayOfWeek) => ({
+      serviceId,
+      dayOfWeek,
+      startTime,
+      endTime,
+      format,
+      durationMinutes,
+    })),
+  });
+
   revalidatePath("/admin/availability");
 }
 
@@ -133,11 +172,17 @@ export async function deleteBlockedDate(id: string) {
   revalidatePath("/admin/availability");
 }
 
-// Bulk safety-net: wipes every not-yet-booked slot (leaves booked ones
-// untouched) so a wrong recurring-hours setup — or wanting to start the
-// schedule over from scratch — doesn't mean removing hundreds of slots
-// one at a time.
-export async function clearUnbookedSlots() {
-  await prisma.availabilitySlot.deleteMany({ where: { isBooked: false } });
+// Bulk safety-net: wipes not-yet-booked slots for one chosen service (or,
+// explicitly, every service) so a wrong recurring-hours setup — or wanting
+// to start a service's schedule over — doesn't mean removing hundreds of
+// slots one at a time. Scoped by default so clearing one service's mistake
+// can't silently wipe every other service's real open slots too.
+export async function clearUnbookedSlots(formData: FormData) {
+  const serviceId = String(formData.get("serviceId") ?? "");
+  if (!serviceId) return;
+
+  await prisma.availabilitySlot.deleteMany({
+    where: { isBooked: false, ...(serviceId === "all" ? {} : { serviceId }) },
+  });
   revalidatePath("/admin/availability");
 }

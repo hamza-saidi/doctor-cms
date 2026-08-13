@@ -2,6 +2,15 @@ import { prisma } from "@/lib/prisma";
 import { updateBookingStatus } from "./actions";
 import PaymentLinkButton from "@/components/admin/PaymentLinkButton";
 
+const STATUSES = ["pending", "confirmed", "completed", "no-show", "cancelled"] as const;
+const STATUS_LABELS: Record<string, string> = {
+  pending: "Pending",
+  confirmed: "Confirmed",
+  completed: "Completed",
+  "no-show": "No-show",
+  cancelled: "Cancelled",
+};
+
 function formatDateTime(date: Date | null) {
   if (!date) return "No slot selected";
   return new Intl.DateTimeFormat("en-GB", {
@@ -13,18 +22,97 @@ function formatDateTime(date: Date | null) {
   }).format(date);
 }
 
-export default async function AdminBookingsPage() {
-  const bookings = await prisma.booking.findMany({
-    orderBy: { createdAt: "desc" },
+function buildHref(status: string | undefined, q: string | undefined) {
+  const params = new URLSearchParams();
+  if (status) params.set("status", status);
+  if (q) params.set("q", q);
+  const qs = params.toString();
+  return qs ? `/admin/bookings?${qs}` : "/admin/bookings";
+}
+
+export default async function AdminBookingsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ status?: string; q?: string }>;
+}) {
+  const { status: statusFilter, q } = await searchParams;
+
+  const allBookings = await prisma.booking.findMany({
     include: { service: true, slot: true },
+  });
+
+  // Appointment date, not request date, is what an admin scanning this list
+  // needs to triage by — a pending request for next week matters more right
+  // now than a brand-new one created seconds ago. Requests with no slot
+  // picked yet (general requests) need outreach before anything else, so
+  // they sort first; everything else is soonest-appointment-first.
+  allBookings.sort((a, b) => {
+    if (!a.slot && !b.slot) return b.createdAt.getTime() - a.createdAt.getTime();
+    if (!a.slot) return -1;
+    if (!b.slot) return 1;
+    return a.slot.startsAt.getTime() - b.slot.startsAt.getTime();
+  });
+
+  const counts = Object.fromEntries(STATUSES.map((s) => [s, allBookings.filter((b) => b.status === s).length]));
+
+  const needle = (q ?? "").trim().toLowerCase();
+  const bookings = allBookings.filter((b) => {
+    if (statusFilter && b.status !== statusFilter) return false;
+    if (needle && !b.name.toLowerCase().includes(needle) && !b.email.toLowerCase().includes(needle)) return false;
+    return true;
   });
 
   return (
     <div className="max-w-4xl">
-      <h1 className="font-display text-headline-md text-primary mb-8">Bookings</h1>
+      <h1 className="font-display text-headline-md text-primary mb-6">Bookings</h1>
+
+      <div className="flex flex-wrap items-center gap-2 mb-4">
+        <a
+          href={buildHref(undefined, q)}
+          className={`px-3 py-1.5 rounded-full text-sm transition-colors ${
+            !statusFilter
+              ? "bg-primary text-on-primary"
+              : "border border-outline-variant text-on-surface-variant hover:border-primary"
+          }`}
+        >
+          All ({allBookings.length})
+        </a>
+        {STATUSES.map((s) => (
+          <a
+            key={s}
+            href={buildHref(s, q)}
+            className={`px-3 py-1.5 rounded-full text-sm transition-colors ${
+              statusFilter === s
+                ? "bg-primary text-on-primary"
+                : "border border-outline-variant text-on-surface-variant hover:border-primary"
+            }`}
+          >
+            {STATUS_LABELS[s]} ({counts[s]})
+          </a>
+        ))}
+      </div>
+
+      <form method="GET" className="mb-6 flex gap-2 max-w-sm">
+        {statusFilter && <input type="hidden" name="status" value={statusFilter} />}
+        <input
+          type="text"
+          name="q"
+          defaultValue={q ?? ""}
+          placeholder="Search name or email…"
+          className="w-full border border-outline-variant focus:border-primary rounded-lg p-2.5 bg-surface-container-lowest text-sm"
+        />
+        <button
+          type="submit"
+          className="bg-surface-container-high text-on-surface px-4 py-2 rounded-lg text-sm hover:bg-surface-container-highest transition-colors shrink-0"
+        >
+          Search
+        </button>
+      </form>
 
       {bookings.length === 0 && (
-        <p className="text-on-surface-variant text-sm">No booking requests yet.</p>
+        <p className="text-on-surface-variant text-sm">
+          {allBookings.length === 0 ? "No booking requests yet." : "No bookings match this filter."}
+        </p>
       )}
 
       <div className="space-y-4">
@@ -57,9 +145,11 @@ export default async function AdminBookingsPage() {
                   defaultValue={booking.status}
                   className="border border-outline-variant rounded-lg p-2 text-sm bg-surface-container-lowest"
                 >
-                  <option value="pending">Pending</option>
-                  <option value="confirmed">Confirmed</option>
-                  <option value="cancelled">Cancelled</option>
+                  {STATUSES.map((s) => (
+                    <option key={s} value={s}>
+                      {STATUS_LABELS[s]}
+                    </option>
+                  ))}
                 </select>
                 <button
                   type="submit"

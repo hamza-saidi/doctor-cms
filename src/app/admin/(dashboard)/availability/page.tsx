@@ -5,6 +5,7 @@ import {
   deleteSlot,
   createRule,
   deleteRules,
+  updateRule,
   createBlockedDate,
   deleteBlockedDate,
   clearUnbookedSlots,
@@ -58,7 +59,50 @@ function formatDateOnly(dateStr: string) {
   }).format(new Date(`${dateStr}T12:00:00Z`));
 }
 
-export default async function AdminAvailabilityPage() {
+// Shared by the "add recurring hours" form and each rule group's inline
+// edit form — grouped under data-day-group so the preset-button script
+// below can target whichever instance a click happened in.
+function DayPicker({ selectedDays }: { selectedDays: number[] }) {
+  return (
+    <div className="space-y-1" data-day-group>
+      <div className="flex items-center justify-between">
+        <label className={labelClass}>Days</label>
+        <div className="flex gap-3">
+          <button type="button" data-day-preset="1,2,3,4,5" className="text-xs text-primary hover:underline">
+            Weekdays
+          </button>
+          <button type="button" data-day-preset="0,6" className="text-xs text-primary hover:underline">
+            Weekend
+          </button>
+          <button type="button" data-day-preset="0,1,2,3,4,5,6" className="text-xs text-primary hover:underline">
+            Every day
+          </button>
+        </div>
+      </div>
+      <div className="flex flex-wrap gap-x-5 gap-y-2 pt-1">
+        {DAY_NAMES.map((name, i) => (
+          <label key={name} className="flex items-center gap-2 text-sm text-on-surface">
+            <input
+              type="checkbox"
+              name="dayOfWeek"
+              value={i}
+              defaultChecked={selectedDays.includes(i)}
+              className="accent-primary w-4 h-4"
+            />
+            {DAY_SHORT[i]}
+          </label>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export default async function AdminAvailabilityPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ edit?: string }>;
+}) {
+  const { edit: editKey } = await searchParams;
   await ensureSlotsGenerated();
 
   const [services, slots, rules, blockedDates] = await Promise.all([
@@ -98,36 +142,7 @@ export default async function AdminAvailabilityPage() {
           </div>
         </div>
 
-        <div className="space-y-1">
-          <div className="flex items-center justify-between">
-            <label className={labelClass}>Days</label>
-            <div className="flex gap-3">
-              <button type="button" data-day-preset="1,2,3,4,5" className="text-xs text-primary hover:underline">
-                Weekdays
-              </button>
-              <button type="button" data-day-preset="0,6" className="text-xs text-primary hover:underline">
-                Weekend
-              </button>
-              <button type="button" data-day-preset="0,1,2,3,4,5,6" className="text-xs text-primary hover:underline">
-                Every day
-              </button>
-            </div>
-          </div>
-          <div id="day-checkboxes" className="flex flex-wrap gap-x-5 gap-y-2 pt-1">
-            {DAY_NAMES.map((name, i) => (
-              <label key={name} className="flex items-center gap-2 text-sm text-on-surface">
-                <input
-                  type="checkbox"
-                  name="dayOfWeek"
-                  value={i}
-                  defaultChecked={i >= 1 && i <= 5}
-                  className="accent-primary w-4 h-4"
-                />
-                {DAY_SHORT[i]}
-              </label>
-            ))}
-          </div>
-        </div>
+        <DayPicker selectedDays={[1, 2, 3, 4, 5]} />
 
         <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
           <div className="space-y-1">
@@ -163,7 +178,9 @@ export default async function AdminAvailabilityPage() {
             document.querySelectorAll('[data-day-preset]').forEach(function (btn) {
               btn.addEventListener('click', function () {
                 var days = btn.getAttribute('data-day-preset').split(',');
-                document.querySelectorAll('#day-checkboxes input[name="dayOfWeek"]').forEach(function (cb) {
+                var group = btn.closest('[data-day-group]');
+                if (!group) return;
+                group.querySelectorAll('input[name="dayOfWeek"]').forEach(function (cb) {
                   cb.checked = days.indexOf(cb.value) !== -1;
                 });
               });
@@ -171,7 +188,9 @@ export default async function AdminAvailabilityPage() {
             var clearSlotsForm = document.getElementById('clear-slots-form');
             if (clearSlotsForm) {
               clearSlotsForm.addEventListener('submit', function (e) {
-                if (!confirm('Remove all open (not yet booked) slots? Booked sessions are not affected. This cannot be undone.')) {
+                var select = clearSlotsForm.querySelector('select[name="serviceId"]');
+                var label = select.options[select.selectedIndex].text;
+                if (!confirm('Remove all open (not yet booked) slots for "' + label + '"? Booked sessions are not affected. This cannot be undone.')) {
                   e.preventDefault();
                 }
               });
@@ -193,26 +212,92 @@ export default async function AdminAvailabilityPage() {
               },
               {}
             )
-          ).map(({ rule, ids, days }) => (
-            <div
-              key={ids.join(",")}
-              className="bg-surface-container-lowest rounded-xl p-4 service-card-shadow flex items-center justify-between gap-4"
-            >
-              <div>
-                <p className="text-on-surface font-medium">
-                  {rule.service.name} · {formatDayRange(days)}, {rule.startTime}–{rule.endTime}
-                </p>
-                <p className="text-on-surface-variant text-sm">
-                  {rule.durationMinutes}-min sessions · {rule.format}
-                </p>
+          ).map(({ rule, ids, days }) => {
+            const groupKey = ids.join(",");
+
+            if (editKey === groupKey) {
+              return (
+                <form
+                  key={groupKey}
+                  action={updateRule}
+                  className="bg-surface-container rounded-xl p-4 space-y-4 border border-dashed border-outline-variant"
+                >
+                  <input type="hidden" name="ruleIds" value={groupKey} />
+                  <input type="hidden" name="serviceId" value={rule.serviceId} />
+                  <p className="text-on-surface font-medium text-sm">Editing: {rule.service.name}</p>
+                  <DayPicker selectedDays={days} />
+                  <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+                    <div className="space-y-1">
+                      <label className={labelClass}>From</label>
+                      <input type="time" name="startTime" required defaultValue={rule.startTime} className={inputClass} />
+                    </div>
+                    <div className="space-y-1">
+                      <label className={labelClass}>To</label>
+                      <input type="time" name="endTime" required defaultValue={rule.endTime} className={inputClass} />
+                    </div>
+                    <div className="space-y-1">
+                      <label className={labelClass}>Session length (min)</label>
+                      <input
+                        type="number"
+                        name="durationMinutes"
+                        defaultValue={rule.durationMinutes}
+                        min={15}
+                        step={5}
+                        className={inputClass}
+                      />
+                    </div>
+                    <div className="space-y-1">
+                      <label className={labelClass}>Format</label>
+                      <select name="format" defaultValue={rule.format} className={inputClass}>
+                        <option value="online">Online</option>
+                        <option value="in-person">In person</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="submit"
+                      className="bg-primary text-on-primary px-5 py-2 rounded-full text-sm hover:bg-primary-container hover:text-on-primary-container transition-colors"
+                    >
+                      Save changes
+                    </button>
+                    <a
+                      href="/admin/availability"
+                      className="px-5 py-2 rounded-full text-sm border border-outline-variant text-on-surface-variant hover:border-primary"
+                    >
+                      Cancel
+                    </a>
+                  </div>
+                </form>
+              );
+            }
+
+            return (
+              <div
+                key={groupKey}
+                className="bg-surface-container-lowest rounded-xl p-4 service-card-shadow flex items-center justify-between gap-4"
+              >
+                <div>
+                  <p className="text-on-surface font-medium">
+                    {rule.service.name} · {formatDayRange(days)}, {rule.startTime}–{rule.endTime}
+                  </p>
+                  <p className="text-on-surface-variant text-sm">
+                    {rule.durationMinutes}-min sessions · {rule.format}
+                  </p>
+                </div>
+                <div className="flex items-center gap-4 shrink-0">
+                  <a href={`/admin/availability?edit=${groupKey}`} className="text-primary text-sm hover:underline">
+                    Edit
+                  </a>
+                  <form action={deleteRules.bind(null, ids)}>
+                    <button type="submit" className="text-error text-sm hover:underline">
+                      Remove
+                    </button>
+                  </form>
+                </div>
               </div>
-              <form action={deleteRules.bind(null, ids)}>
-                <button type="submit" className="text-error text-sm hover:underline">
-                  Remove
-                </button>
-              </form>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
 
@@ -325,9 +410,21 @@ export default async function AdminAvailabilityPage() {
       <div className="flex items-center justify-between mb-4">
         <h2 className="font-display text-headline-sm text-primary">Upcoming slots</h2>
         {slots.length > 0 && (
-          <form action={clearUnbookedSlots} id="clear-slots-form">
+          <form action={clearUnbookedSlots} id="clear-slots-form" className="flex items-center gap-2">
+            <select
+              name="serviceId"
+              defaultValue={services[0]?.id ?? "all"}
+              className="border border-outline-variant rounded-lg px-2 py-1.5 text-xs bg-surface-container-lowest"
+            >
+              {services.map((s) => (
+                <option key={s.id} value={s.id}>
+                  {s.name}
+                </option>
+              ))}
+              <option value="all">All services</option>
+            </select>
             <button type="submit" className="text-error text-sm hover:underline">
-              Clear all open slots
+              Clear open slots
             </button>
           </form>
         )}

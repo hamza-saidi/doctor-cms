@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState, type FormEvent } from "react";
+import { useRouter } from "next/navigation";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { Service, AvailabilitySlot } from "@prisma/client";
 
@@ -55,7 +56,9 @@ export default function BookingRequestForm({
   slots: SlotWithService[];
   initialServiceSlug?: string;
 }) {
+  const router = useRouter();
   const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
+  const [errorMessage, setErrorMessage] = useState("");
   const [serviceId, setServiceId] = useState(
     services.find((s) => s.slug === initialServiceSlug)?.id ?? services[0]?.id ?? ""
   );
@@ -144,12 +147,28 @@ export default function BookingRequestForm({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
-      if (!res.ok) throw new Error("Request failed");
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        if (res.status === 409) {
+          // Someone else took this slot between page load and submit — the
+          // slots this component knows about are now stale, so re-run the
+          // server component (book-and-pay is force-dynamic) to fetch a
+          // fresh list rather than let the visitor keep retrying a slot
+          // that will always fail.
+          setSlotId("");
+          setSelectedDate(null);
+          router.refresh();
+        }
+        setErrorMessage(data?.error || "Something went wrong — please try again.");
+        setStatus("error");
+        return;
+      }
       setStatus("sent");
       form.reset();
       setSlotId("");
       setSelectedDate(null);
     } catch {
+      setErrorMessage("Something went wrong — please try again.");
       setStatus("error");
     }
   }
@@ -387,9 +406,7 @@ export default function BookingRequestForm({
         <p className="text-on-surface-variant text-sm">Pick a highlighted day, then a time, to continue.</p>
       )}
 
-      {status === "error" && (
-        <p className="text-error text-sm">Something went wrong — please try again.</p>
-      )}
+      {status === "error" && <p className="text-error text-sm">{errorMessage}</p>}
 
       <button
         type="submit"
