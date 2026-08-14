@@ -36,7 +36,7 @@ export async function deleteSlot(id: string) {
   // Record first: if this occurrence came from a recurring rule, this stops
   // it from being regenerated on the next page load. Harmless no-op for
   // manually-added slots, which nothing will try to recreate anyway.
-  await recordAvailabilityException(slot.serviceId, slot.startsAt);
+  await recordAvailabilityException(slot.serviceId, slot.startsAt, slot.format);
   await prisma.availabilitySlot.delete({ where: { id } });
   revalidatePath("/admin/availability");
 }

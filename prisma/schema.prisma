@@ -108,9 +108,14 @@ model AvailabilityException {
   id        String   @id @default(cuid())
   serviceId String
   startsAt  DateTime
+  // Without this, an exception recorded for one format (e.g. deleting an
+  // online slot) would also permanently block regenerating an in-person
+  // slot at that exact same service+time, since they'd otherwise collide
+  // on the same key.
+  format    String
   createdAt DateTime @default(now())
 
-  @@unique([serviceId, startsAt])
+  @@unique([serviceId, startsAt, format])
 }
 
 model Booking {

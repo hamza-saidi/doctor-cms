@@ -81,16 +81,19 @@ export async function ensureSlotsGenerated(): Promise<void> {
   const [existingSlots, exceptions] = await Promise.all([
     prisma.availabilitySlot.findMany({
       where: { startsAt: { gte: rangeStart, lt: rangeEnd } },
-      select: { serviceId: true, startsAt: true },
+      select: { serviceId: true, startsAt: true, format: true },
     }),
     prisma.availabilityException.findMany({
       where: { startsAt: { gte: rangeStart, lt: rangeEnd } },
-      select: { serviceId: true, startsAt: true },
+      select: { serviceId: true, startsAt: true, format: true },
     }),
   ]);
 
-  const seenKeys = new Set(existingSlots.map((s) => `${s.serviceId}|${s.startsAt.getTime()}`));
-  const exceptionKeys = new Set(exceptions.map((e) => `${e.serviceId}|${e.startsAt.getTime()}`));
+  // Keyed by format too — two rules for the same service/day/time but
+  // different formats (e.g. online + in-person, both Mon-Fri 09:00-17:00)
+  // are legitimately different slots, not duplicates of each other.
+  const seenKeys = new Set(existingSlots.map((s) => `${s.serviceId}|${s.format}|${s.startsAt.getTime()}`));
+  const exceptionKeys = new Set(exceptions.map((e) => `${e.serviceId}|${e.format}|${e.startsAt.getTime()}`));
 
   const candidates: { serviceId: string; startsAt: Date; endsAt: Date; format: string }[] = [];
 
@@ -109,7 +112,7 @@ export async function ensureSlotsGenerated(): Promise<void> {
       for (let slotStart = dayStart; slotStart + durationMs <= dayEnd; slotStart += durationMs) {
         if (slotStart < Date.now()) continue; // never backfill past slots
         const startsAt = new Date(slotStart);
-        const key = `${rule.serviceId}|${startsAt.getTime()}`;
+        const key = `${rule.serviceId}|${rule.format}|${startsAt.getTime()}`;
         if (seenKeys.has(key) || exceptionKeys.has(key)) continue;
         seenKeys.add(key); // guards against overlapping rules double-booking the same instant
         candidates.push({
@@ -142,10 +145,14 @@ export async function removeUnbookedSlotsOnDate(dateStr: string): Promise<void> 
 // Records that a specific rule-generated occurrence should stay removed —
 // otherwise the next ensureSlotsGenerated() pass would just recreate the
 // exact slot an admin just deleted.
-export async function recordAvailabilityException(serviceId: string, startsAt: Date): Promise<void> {
+export async function recordAvailabilityException(
+  serviceId: string,
+  startsAt: Date,
+  format: string
+): Promise<void> {
   await prisma.availabilityException.upsert({
-    where: { serviceId_startsAt: { serviceId, startsAt } },
+    where: { serviceId_startsAt_format: { serviceId, startsAt, format } },
     update: {},
-    create: { serviceId, startsAt },
+    create: { serviceId, startsAt, format },
   });
 }
