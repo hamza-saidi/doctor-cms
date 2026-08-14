@@ -44,3 +44,24 @@ export async function saveGoogleSettings(formData: FormData) {
   });
   revalidatePath("/admin/settings");
 }
+
+export async function saveSmtpSettings(formData: FormData) {
+  const portRaw = emptyToUndefined(formData.get("smtpPort"));
+  await prisma.integrationSettings.upsert({
+    where: { id: 1 },
+    update: {
+      smtpHost: emptyToUndefined(formData.get("smtpHost")),
+      smtpPort: portRaw ? Number(portRaw) : undefined,
+      smtpUser: emptyToUndefined(formData.get("smtpUser")),
+      smtpPassword: emptyToUndefined(formData.get("smtpPassword")),
+    },
+    create: {
+      id: 1,
+      smtpHost: emptyToUndefined(formData.get("smtpHost")),
+      smtpPort: portRaw ? Number(portRaw) : undefined,
+      smtpUser: emptyToUndefined(formData.get("smtpUser")),
+      smtpPassword: emptyToUndefined(formData.get("smtpPassword")),
+    },
+  });
+  revalidatePath("/admin/settings");
+}

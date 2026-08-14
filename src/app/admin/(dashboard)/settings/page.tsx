@@ -1,6 +1,6 @@
 import { CalendarCheck, CalendarPlus, CheckCircle2, Circle } from "lucide-react";
 import { prisma } from "@/lib/prisma";
-import { disconnectGoogleCalendar, saveMollieSettings, saveGoogleSettings } from "./actions";
+import { disconnectGoogleCalendar, saveMollieSettings, saveGoogleSettings, saveSmtpSettings } from "./actions";
 
 const inputClass =
   "w-full border border-outline-variant focus:border-primary rounded-lg p-2.5 bg-surface-container-lowest text-sm";
@@ -35,8 +35,8 @@ export default async function AdminSettingsPage({
 
       {connected && (
         <div className="bg-primary-container text-on-primary-container rounded-lg p-4 text-sm">
-          Google account connected successfully — calendar sync and confirmation emails are now
-          active.
+          Google account connected successfully — confirmed bookings will now sync to this
+          calendar.
         </div>
       )}
       {error && (
@@ -75,19 +75,18 @@ export default async function AdminSettingsPage({
         </form>
       </div>
 
-      {/* Google Calendar & Email */}
+      {/* Google Calendar */}
       <div className="bg-surface-container-lowest rounded-xl p-6 service-card-shadow space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="font-display text-headline-sm text-primary">Google Calendar & Email</h2>
+          <h2 className="font-display text-headline-sm text-primary">Google Calendar</h2>
           <ConfiguredBadge
             configured={Boolean(settings?.googleClientId && settings?.googleClientSecret)}
           />
         </div>
         <p className="text-on-surface-variant text-sm">
           Client ID/Secret come from a Google Cloud OAuth client (set up once by your developer).
-          Once saved, connect your own Google account below — this both syncs confirmed bookings
-          to your calendar and sends the booking confirmation + payment link to clients from your
-          own Gmail address when you generate a payment link.
+          Once saved, connect your own Google account below to sync confirmed bookings to your
+          calendar. Booking confirmation emails are sent separately — see Email below.
         </p>
         <form action={saveGoogleSettings} className="space-y-3">
           <div className="space-y-1">
@@ -139,6 +138,73 @@ export default async function AdminSettingsPage({
             </a>
           )}
         </div>
+      </div>
+
+      {/* Email (SMTP) */}
+      <div className="bg-surface-container-lowest rounded-xl p-6 service-card-shadow space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="font-display text-headline-sm text-primary">Email</h2>
+          <ConfiguredBadge
+            configured={Boolean(
+              settings?.smtpHost && settings?.smtpPort && settings?.smtpUser && settings?.smtpPassword
+            )}
+          />
+        </div>
+        <p className="text-on-surface-variant text-sm">
+          Booking confirmations and payment links are sent from this mailbox (e.g. your hosting
+          provider&apos;s email, like <code>info@wellsight.fi</code>) — get the Host/Port from your
+          email host&apos;s SMTP settings page. The password is stored securely and never shown
+          again once saved.
+        </p>
+        <form action={saveSmtpSettings} className="space-y-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <label className={labelClass}>Host</label>
+              <input
+                name="smtpHost"
+                type="text"
+                placeholder={settings?.smtpHost ?? "mail.wellsightcare.com"}
+                className={inputClass}
+              />
+            </div>
+            <div className="space-y-1">
+              <label className={labelClass}>Port</label>
+              <input
+                name="smtpPort"
+                type="number"
+                placeholder={settings?.smtpPort ? String(settings.smtpPort) : "587"}
+                className={inputClass}
+              />
+            </div>
+          </div>
+          <div className="space-y-1">
+            <label className={labelClass}>Email address</label>
+            <input
+              name="smtpUser"
+              type="email"
+              placeholder={settings?.smtpUser ?? "info@wellsight.fi"}
+              className={inputClass}
+            />
+            <p className="text-on-surface-variant/70 text-xs">
+              Used as both the login and the &ldquo;From&rdquo; address clients see.
+            </p>
+          </div>
+          <div className="space-y-1">
+            <label className={labelClass}>Password</label>
+            <input
+              name="smtpPassword"
+              type="password"
+              placeholder={settings?.smtpPassword ? "•••••••••••••••• (leave blank to keep)" : "mailbox password"}
+              className={inputClass}
+            />
+          </div>
+          <button
+            type="submit"
+            className="bg-primary text-on-primary px-5 py-2 rounded-full text-sm hover:bg-primary-container hover:text-on-primary-container transition-colors"
+          >
+            Save
+          </button>
+        </form>
       </div>
     </div>
   );

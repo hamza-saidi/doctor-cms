@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getMollieClient } from "@/lib/mollie";
-import { sendBookingConfirmationEmail } from "@/lib/google";
+import { sendBookingConfirmationEmail } from "@/lib/email";
 
 export async function POST(request: Request, ctx: RouteContext<"/api/admin/bookings/[id]/payment-link">) {
   const { id } = await ctx.params;

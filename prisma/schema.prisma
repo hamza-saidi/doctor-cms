@@ -160,6 +160,14 @@ model IntegrationSettings {
   mollieApiKey       String?
   googleClientId     String?
   googleClientSecret String?
+
+  // Outgoing mail (booking confirmations + payment links) via a regular
+  // hosting mailbox (e.g. Plesk), not Gmail — the mailbox's own address
+  // doubles as both the SMTP username and the "From" address.
+  smtpHost     String?
+  smtpPort     Int?
+  smtpUser     String?
+  smtpPassword String?
 }
 
 // Per-page <title>/meta description, editable from /admin/seo. Seeded from

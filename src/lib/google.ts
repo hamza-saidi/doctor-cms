@@ -4,7 +4,6 @@ import { getIntegrationSettings } from "@/lib/settings";
 
 const SCOPES = [
   "https://www.googleapis.com/auth/calendar.events",
-  "https://www.googleapis.com/auth/gmail.send",
   "https://www.googleapis.com/auth/userinfo.email",
 ];
 
@@ -95,95 +94,6 @@ export async function createCalendarEvent(params: {
   });
 
   return data.id ?? null;
-}
-
-// Gmail's raw send format is a base64url-encoded RFC 2822 message — no
-// separate email service needed, since this reuses the same connected
-// Google account (and its refresh token) as Calendar sync above.
-function buildRawEmail(params: { to: string; from: string; subject: string; text: string }) {
-  const message = [
-    `To: ${params.to}`,
-    `From: ${params.from}`,
-    `Subject: ${params.subject}`,
-    "MIME-Version: 1.0",
-    "Content-Type: text/plain; charset=utf-8",
-    "",
-    params.text,
-  ].join("\r\n");
-
-  return Buffer.from(message)
-    .toString("base64")
-    .replace(/\+/g, "-")
-    .replace(/\//g, "_")
-    .replace(/=+$/, "");
-}
-
-// Sends from whichever Google account is connected under /admin/settings.
-// Returns false (never throws) if nothing is connected — callers treat
-// email as a nice-to-have alongside the payment link, not a hard dependency.
-export async function sendEmail(params: { to: string; subject: string; text: string }): Promise<boolean> {
-  const connection = await prisma.googleCalendarConnection.findUnique({ where: { id: 1 } });
-  if (!connection) return false;
-
-  const client = await getOAuthClient();
-  client.setCredentials({ refresh_token: connection.refreshToken });
-  const gmail = google.gmail({ version: "v1", auth: client });
-
-  const raw = buildRawEmail({ ...params, from: connection.accountEmail });
-  await gmail.users.messages.send({ userId: "me", requestBody: { raw } });
-  return true;
-}
-
-const helsinkiDateTime = new Intl.DateTimeFormat("en-GB", {
-  weekday: "long",
-  day: "2-digit",
-  month: "long",
-  hour: "2-digit",
-  minute: "2-digit",
-  timeZone: "Europe/Helsinki",
-});
-
-// Sent when the admin generates a Mollie payment link for a booking — the
-// "doctor checks availability and sends the confirmation" step, done
-// automatically instead of by hand.
-export async function sendBookingConfirmationEmail(bookingId: string, checkoutUrl: string): Promise<boolean> {
-  const booking = await prisma.booking.findUnique({
-    where: { id: bookingId },
-    include: { service: true, slot: true },
-  });
-  if (!booking) return false;
-
-  const lines = [
-    `Hi ${booking.name},`,
-    "",
-    `Your ${booking.service.name.toLowerCase()} session (${booking.format}) is confirmed on our end.`,
-  ];
-
-  if (booking.slot) {
-    lines.push(`Time: ${helsinkiDateTime.format(booking.slot.startsAt)} (Helsinki time)`);
-  }
-
-  lines.push(
-    "",
-    "To finish booking your spot, please complete payment using the secure link below:",
-    checkoutUrl,
-    "",
-    "If you have any questions before then, just reply to this email.",
-    "",
-    "Best,",
-    "WellSight"
-  );
-
-  try {
-    return await sendEmail({
-      to: booking.email,
-      subject: `Your WellSight ${booking.service.name} booking — payment link inside`,
-      text: lines.join("\n"),
-    });
-  } catch (err) {
-    console.error("Failed to send booking confirmation email:", err);
-    return false;
-  }
 }
 
 // Puts a confirmed booking on the connected Google Calendar. No-ops quietly
