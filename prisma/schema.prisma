@@ -71,7 +71,12 @@ model AvailabilitySlot {
   isBooked  Boolean  @default(false)
   booking   Booking?
 
-  @@unique([serviceId, startsAt])
+  // format is part of the key: the same service can legitimately have both
+  // an online and an in-person slot at the exact same timestamp (e.g. a
+  // "Mon-Fri 09:00-17:00" recurring rule set up for both formats) — without
+  // format here, the database itself silently rejects the second one as a
+  // duplicate of the first, no matter what application code computes.
+  @@unique([serviceId, startsAt, format])
   @@index([startsAt])
 }
 
