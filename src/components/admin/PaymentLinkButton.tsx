@@ -17,6 +17,11 @@ export default function PaymentLinkButton({
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
+  // Distinguishes "we just tried, in this session, and it failed" from a
+  // pre-existing link loaded from props — otherwise a booking whose link
+  // was generated in a past session (where we don't know the outcome)
+  // would wrongly show a "failed" warning on every subsequent page load.
+  const [justGenerated, setJustGenerated] = useState(false);
 
   async function generateLink() {
     setLoading(true);
@@ -29,6 +34,7 @@ export default function PaymentLinkButton({
       if (!res.ok) throw new Error(body.error ?? "Failed to generate link.");
       setUrl(body.url);
       setEmailSent(Boolean(body.emailSent));
+      setJustGenerated(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to generate link.");
     } finally {
@@ -58,8 +64,13 @@ export default function PaymentLinkButton({
             {copied ? <Check size={14} /> : <Copy size={14} />}
             {copied ? "Copied!" : "Copy payment link"}
           </button>
-          {emailSent && (
+          {justGenerated && emailSent && (
             <span className="text-xs text-on-surface-variant/70">Confirmation emailed to client</span>
+          )}
+          {justGenerated && !emailSent && (
+            <span className="text-error text-xs max-w-[220px] text-right">
+              Link created, but the email failed to send — check Email settings.
+            </span>
           )}
         </>
       ) : (

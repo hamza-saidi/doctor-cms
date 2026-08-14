@@ -1,6 +1,12 @@
 import { CalendarCheck, CalendarPlus, CheckCircle2, Circle } from "lucide-react";
 import { prisma } from "@/lib/prisma";
-import { disconnectGoogleCalendar, saveMollieSettings, saveGoogleSettings, saveSmtpSettings } from "./actions";
+import {
+  disconnectGoogleCalendar,
+  saveMollieSettings,
+  saveGoogleSettings,
+  saveSmtpSettings,
+  sendTestEmail,
+} from "./actions";
 
 const inputClass =
   "w-full border border-outline-variant focus:border-primary rounded-lg p-2.5 bg-surface-container-lowest text-sm";
@@ -21,9 +27,9 @@ function ConfiguredBadge({ configured }: { configured: boolean }) {
 export default async function AdminSettingsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ connected?: string; error?: string }>;
+  searchParams: Promise<{ connected?: string; error?: string; emailTestOk?: string; emailTestError?: string }>;
 }) {
-  const { connected, error } = await searchParams;
+  const { connected, error, emailTestOk, emailTestError } = await searchParams;
   const [connection, settings] = await Promise.all([
     prisma.googleCalendarConnection.findUnique({ where: { id: 1 } }),
     prisma.integrationSettings.findUnique({ where: { id: 1 } }),
@@ -156,13 +162,31 @@ export default async function AdminSettingsPage({
           email host&apos;s SMTP settings page. The password is stored securely and never shown
           again once saved.
         </p>
-        <form action={saveSmtpSettings} className="space-y-3">
+        {emailTestOk && (
+          <div className="bg-primary-container text-on-primary-container rounded-lg p-3 text-sm">
+            Test email sent — check the inbox for the address below.
+          </div>
+        )}
+        {emailTestError && (
+          <div className="bg-error-container text-on-error-container rounded-lg p-3 text-sm">
+            {emailTestError}
+          </div>
+        )}
+        {/*
+          autoComplete="off" + a password field marked "new-password" stops
+          browsers from treating this as a login form and silently
+          overwriting these fields with saved credentials (e.g. the admin
+          login) on page load — a real bug seen in testing, not a
+          hypothetical one.
+        */}
+        <form action={saveSmtpSettings} className="space-y-3" autoComplete="off">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1">
               <label className={labelClass}>Host</label>
               <input
                 name="smtpHost"
                 type="text"
+                autoComplete="off"
                 placeholder={settings?.smtpHost ?? "mail.wellsightcare.com"}
                 className={inputClass}
               />
@@ -172,6 +196,7 @@ export default async function AdminSettingsPage({
               <input
                 name="smtpPort"
                 type="number"
+                autoComplete="off"
                 placeholder={settings?.smtpPort ? String(settings.smtpPort) : "587"}
                 className={inputClass}
               />
@@ -182,6 +207,7 @@ export default async function AdminSettingsPage({
             <input
               name="smtpUser"
               type="email"
+              autoComplete="off"
               placeholder={settings?.smtpUser ?? "info@wellsight.fi"}
               className={inputClass}
             />
@@ -194,6 +220,7 @@ export default async function AdminSettingsPage({
             <input
               name="smtpPassword"
               type="password"
+              autoComplete="new-password"
               placeholder={settings?.smtpPassword ? "•••••••••••••••• (leave blank to keep)" : "mailbox password"}
               className={inputClass}
             />
@@ -205,6 +232,21 @@ export default async function AdminSettingsPage({
             Save
           </button>
         </form>
+
+        <div className="pt-2 border-t border-outline-variant/50">
+          <form action={sendTestEmail} className="pt-4">
+            <button
+              type="submit"
+              className="text-primary text-sm hover:underline"
+            >
+              Send test email to {settings?.smtpUser ?? "yourself"}
+            </button>
+            <p className="text-on-surface-variant/70 text-xs mt-1">
+              &ldquo;Configured&rdquo; above only means the fields are filled in — this actually
+              tries to send, so you know the credentials really work.
+            </p>
+          </form>
+        </div>
       </div>
     </div>
   );
