@@ -1,5 +1,12 @@
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { prisma } from "@/lib/prisma";
-import { ensureSlotsGenerated, dateToHelsinkiDateStr } from "@/lib/availability";
+import {
+  ensureSlotsGenerated,
+  dateToHelsinkiDateStr,
+  helsinkiWallTimeToUtc,
+  addDays,
+  dayOfWeekFromDateStr,
+} from "@/lib/availability";
 import {
   createSlot,
   deleteSlot,
@@ -47,12 +54,40 @@ function formatTimeOnly(date: Date) {
   }).format(date);
 }
 
-function formatDayHeading(dateStr: string) {
-  return new Intl.DateTimeFormat("en-GB", {
-    weekday: "short",
-    day: "2-digit",
-    month: "short",
-  }).format(new Date(`${dateStr}T12:00:00Z`));
+function formatMonthLabel(monthStr: string) {
+  return new Intl.DateTimeFormat("en-GB", { month: "long", year: "numeric" }).format(
+    new Date(`${monthStr}-01T12:00:00Z`)
+  );
+}
+
+function addMonths(monthStr: string, delta: number): string {
+  const [y, m] = monthStr.split("-").map(Number);
+  const d = new Date(Date.UTC(y, m - 1 + delta, 1));
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}`;
+}
+
+// Monday-first grid cells for a given "YYYY-MM" month, including the
+// leading/trailing days from adjacent months needed to fill whole weeks —
+// same layout convention as the visitor-facing booking calendar.
+function buildMonthGrid(monthStr: string): { dateStr: string; dayNum: number; inMonth: boolean }[] {
+  const monthStartStr = `${monthStr}-01`;
+  const leadingBlanks = (dayOfWeekFromDateStr(monthStartStr) + 6) % 7;
+  const [y, m] = monthStr.split("-").map(Number);
+  const daysInMonth = new Date(Date.UTC(y, m, 0)).getUTCDate();
+
+  const cells: { dateStr: string; dayNum: number; inMonth: boolean }[] = [];
+  for (let i = 0; i < leadingBlanks; i++) {
+    const dateStr = addDays(monthStartStr, i - leadingBlanks);
+    cells.push({ dateStr, dayNum: Number(dateStr.slice(8, 10)), inMonth: false });
+  }
+  for (let d = 1; d <= daysInMonth; d++) {
+    cells.push({ dateStr: `${monthStr}-${String(d).padStart(2, "0")}`, dayNum: d, inMonth: true });
+  }
+  while (cells.length % 7 !== 0) {
+    const nextDate = addDays(cells[cells.length - 1].dateStr, 1);
+    cells.push({ dateStr: nextDate, dayNum: Number(nextDate.slice(8, 10)), inMonth: false });
+  }
+  return cells;
 }
 
 function formatDateOnly(dateStr: string) {
@@ -102,26 +137,45 @@ function DayPicker({ selectedDays }: { selectedDays: number[] }) {
   );
 }
 
-const DAYS_PER_PAGE = 5;
-
 export default async function AdminAvailabilityPage({
   searchParams,
 }: {
-  searchParams: Promise<{ edit?: string; slotsPage?: string }>;
+  searchParams: Promise<{ edit?: string; month?: string; date?: string }>;
 }) {
-  const { edit: editKey, slotsPage: slotsPageParam } = await searchParams;
+  const { edit: editKey, month: monthParam, date: dateParam } = await searchParams;
   await ensureSlotsGenerated();
 
-  const [services, slots, rules, blockedDates] = await Promise.all([
+  const todayStr = dateToHelsinkiDateStr(new Date());
+  const monthStr = monthParam && /^\d{4}-\d{2}$/.test(monthParam) ? monthParam : todayStr.slice(0, 7);
+  const selectedDate = dateParam && dateParam.slice(0, 7) === monthStr ? dateParam : null;
+
+  const monthStartStr = `${monthStr}-01`;
+  const [my, mm] = monthStr.split("-").map(Number);
+  const daysInMonth = new Date(Date.UTC(my, mm, 0)).getUTCDate();
+  const monthEndStr = `${monthStr}-${String(daysInMonth).padStart(2, "0")}`;
+  const monthRangeStart = helsinkiWallTimeToUtc(monthStartStr, "00:00");
+  const monthRangeEnd = helsinkiWallTimeToUtc(addDays(monthEndStr, 1), "00:00");
+
+  const [services, rules, monthSlots, monthBlockedDates] = await Promise.all([
     prisma.service.findMany({ where: { status: "available" }, orderBy: { sortOrder: "asc" } }),
+    prisma.availabilityRule.findMany({ include: { service: true }, orderBy: [{ dayOfWeek: "asc" }, { startTime: "asc" }] }),
     prisma.availabilitySlot.findMany({
-      where: { startsAt: { gt: new Date() } },
+      where: { startsAt: { gte: monthRangeStart, lt: monthRangeEnd } },
       orderBy: { startsAt: "asc" },
       include: { service: true },
     }),
-    prisma.availabilityRule.findMany({ include: { service: true }, orderBy: [{ dayOfWeek: "asc" }, { startTime: "asc" }] }),
-    prisma.blockedDate.findMany({ orderBy: { date: "asc" } }),
+    prisma.blockedDate.findMany({ where: { date: { gte: monthStartStr, lte: monthEndStr } } }),
   ]);
+
+  const slotsByDate = new Map<string, typeof monthSlots>();
+  for (const slot of monthSlots) {
+    const key = dateToHelsinkiDateStr(slot.startsAt);
+    (slotsByDate.get(key) ?? slotsByDate.set(key, []).get(key)!).push(slot);
+  }
+  const blockedByDate = new Map(monthBlockedDates.map((b) => [b.date, b]));
+  const monthGrid = buildMonthGrid(monthStr);
+  const selectedDaySlots = selectedDate ? (slotsByDate.get(selectedDate) ?? []) : [];
+  const selectedBlocked = selectedDate ? blockedByDate.get(selectedDate) : undefined;
 
   return (
     <div className="max-w-3xl">
@@ -308,115 +362,10 @@ export default async function AdminAvailabilityPage({
         </div>
       )}
 
-      {/* Blocked dates */}
-      <h2 className="font-display text-headline-sm text-primary mb-2">Blocked dates</h2>
-      <p className="text-on-surface-variant text-sm mb-4">
-        Days off, holidays, vacation — no slots will be offered on these dates regardless of your
-        recurring hours above.
-      </p>
-      <form
-        action={createBlockedDate}
-        className="bg-surface-container rounded-xl p-6 space-y-4 border border-dashed border-outline-variant mb-6"
-      >
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="space-y-1">
-            <label className={labelClass}>Date</label>
-            <input type="date" name="date" required className={inputClass} />
-          </div>
-          <div className="space-y-1">
-            <label className={labelClass}>Reason (optional)</label>
-            <input type="text" name="reason" placeholder="e.g. Vacation" className={inputClass} />
-          </div>
-        </div>
-        <button
-          type="submit"
-          className="bg-primary text-on-primary px-5 py-2 rounded-full text-sm hover:bg-primary-container hover:text-on-primary-container transition-colors"
-        >
-          Block date
-        </button>
-      </form>
-
-      {blockedDates.length > 0 && (
-        <div className="space-y-2 mb-10">
-          {blockedDates.map((b) => (
-            <div
-              key={b.id}
-              className="bg-surface-container-lowest rounded-xl p-4 service-card-shadow flex items-center justify-between gap-4"
-            >
-              <div>
-                <p className="text-on-surface font-medium">{formatDateOnly(b.date)}</p>
-                {b.reason && <p className="text-on-surface-variant text-sm">{b.reason}</p>}
-              </div>
-              <form action={deleteBlockedDate.bind(null, b.id)}>
-                <button type="submit" className="text-error text-sm hover:underline">
-                  Unblock
-                </button>
-              </form>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Manual one-off slots */}
-      <h2 className="font-display text-headline-sm text-primary mb-2">One-off slot</h2>
-      <p className="text-on-surface-variant text-sm mb-4">
-        For a single exception outside your recurring hours above.
-      </p>
-      <form
-        action={createSlot}
-        className="bg-surface-container rounded-xl p-6 space-y-4 border border-dashed border-outline-variant mb-10"
-      >
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div className="space-y-1">
-            <label className={labelClass}>Service</label>
-            <select name="serviceId" required className={inputClass}>
-              {services.map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.name}
-                </option>
-              ))}
-            </select>
-          </div>
-          <div className="space-y-1">
-            <label className={labelClass}>Format</label>
-            <select name="format" defaultValue="online" className={inputClass}>
-              <option value="online">Online</option>
-              <option value="in-person">In person</option>
-            </select>
-          </div>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="space-y-1">
-            <label className={labelClass}>Date</label>
-            <input type="date" name="date" required className={inputClass} />
-          </div>
-          <div className="space-y-1">
-            <label className={labelClass}>Start time</label>
-            <input type="time" name="startTime" required className={inputClass} />
-          </div>
-          <div className="space-y-1">
-            <label className={labelClass}>Duration (minutes)</label>
-            <input
-              type="number"
-              name="durationMinutes"
-              defaultValue={50}
-              min={15}
-              step={5}
-              className={inputClass}
-            />
-          </div>
-        </div>
-        <button
-          type="submit"
-          className="bg-primary text-on-primary px-5 py-2 rounded-full text-sm hover:bg-primary-container hover:text-on-primary-container transition-colors"
-        >
-          Add slot
-        </button>
-      </form>
-
-      <div id="upcoming-slots" className="flex items-center justify-between mb-4 scroll-mt-4">
-        <h2 className="font-display text-headline-sm text-primary">Upcoming slots</h2>
-        {slots.length > 0 && (
+      {/* Calendar */}
+      <div className="flex items-center justify-between mb-2">
+        <h2 className="font-display text-headline-sm text-primary">Calendar</h2>
+        {monthSlots.some((s) => !s.isBooked) && (
           <form action={clearUnbookedSlots} id="clear-slots-form" className="flex items-center gap-2">
             <select
               name="serviceId"
@@ -436,107 +385,208 @@ export default async function AdminAvailabilityPage({
           </form>
         )}
       </div>
-      {slots.length === 0 && (
-        <p className="text-on-surface-variant text-sm">No upcoming slots yet.</p>
-      )}
-      {slots.length > 0 && (
-        <p className="text-on-surface-variant text-sm mb-4">
-          {slots.filter((s) => !s.isBooked).length} open · {slots.filter((s) => s.isBooked).length} booked,
-          next 8 weeks
-        </p>
-      )}
-      {(() => {
-        const dayGroups = Object.entries(
-          slots.reduce<Record<string, typeof slots>>((groups, slot) => {
-            const dateStr = dateToHelsinkiDateStr(slot.startsAt);
-            (groups[dateStr] ??= []).push(slot);
-            return groups;
-          }, {})
-        );
-        const totalSlotPages = Math.max(1, Math.ceil(dayGroups.length / DAYS_PER_PAGE));
-        const slotsPage = Math.min(Math.max(1, Number(slotsPageParam) || 1), totalSlotPages);
-        const pageDayGroups = dayGroups.slice(
-          (slotsPage - 1) * DAYS_PER_PAGE,
-          slotsPage * DAYS_PER_PAGE
-        );
-        const slotsPageHref = (p: number) =>
-          p > 1 ? `/admin/availability?slotsPage=${p}#upcoming-slots` : "/admin/availability#upcoming-slots";
+      <p className="text-on-surface-variant text-sm mb-4">
+        Click a day to see, add, or remove slots — or block it entirely. Recurring hours above
+        fill this in automatically; this is for one-off exceptions and an at-a-glance view.
+      </p>
 
-        return (
-          <>
-            {dayGroups.length > DAYS_PER_PAGE && (
-              <p className="text-on-surface-variant text-sm mb-3">
-                Days {(slotsPage - 1) * DAYS_PER_PAGE + 1}–
-                {Math.min(slotsPage * DAYS_PER_PAGE, dayGroups.length)} of {dayGroups.length}
-              </p>
+      <div className="bg-surface-container-lowest rounded-xl p-4 sm:p-6 service-card-shadow">
+        <div className="flex items-center justify-between mb-4">
+          <a
+            href={`/admin/availability?month=${addMonths(monthStr, -1)}`}
+            aria-label="Previous month"
+            className="p-1.5 rounded-full text-on-surface-variant hover:text-primary hover:bg-surface-container-high"
+          >
+            <ChevronLeft size={18} />
+          </a>
+          <div className="flex items-center gap-3">
+            <p className="text-label-lg text-primary font-medium">{formatMonthLabel(monthStr)}</p>
+            {monthStr !== todayStr.slice(0, 7) && (
+              <a
+                href={`/admin/availability?month=${todayStr.slice(0, 7)}&date=${todayStr}`}
+                className="text-xs text-primary hover:underline"
+              >
+                Today
+              </a>
             )}
-            <div className="space-y-3">
-              {pageDayGroups.map(([dateStr, daySlots]) => (
-                <div key={dateStr} className="bg-surface-container-lowest rounded-xl p-4 service-card-shadow">
-                  <p className="text-on-surface font-medium text-sm mb-2">{formatDayHeading(dateStr)}</p>
-                  <div className="flex flex-wrap gap-2">
-                    {daySlots.map((slot) => (
-                      <div
-                        key={slot.id}
-                        className={`flex items-center gap-1.5 pl-3 pr-1.5 py-1 rounded-full text-xs ${
-                          slot.isBooked
-                            ? "bg-primary-container text-primary-fixed"
-                            : "bg-secondary-container text-on-secondary-container"
-                        }`}
-                        title={`${slot.service.name} · ${slot.format}`}
-                      >
-                        <span>{formatTimeOnly(slot.startsAt)}</span>
-                        <span className="opacity-70">{slot.service.name}</span>
-                        {!slot.isBooked && (
-                          <form action={deleteSlot.bind(null, slot.id)}>
-                            <button
-                              type="submit"
-                              aria-label="Remove slot"
-                              className="w-4 h-4 flex items-center justify-center rounded-full hover:bg-error hover:text-on-error transition-colors"
-                            >
-                              ×
-                            </button>
-                          </form>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              ))}
+          </div>
+          <a
+            href={`/admin/availability?month=${addMonths(monthStr, 1)}`}
+            aria-label="Next month"
+            className="p-1.5 rounded-full text-on-surface-variant hover:text-primary hover:bg-surface-container-high"
+          >
+            <ChevronRight size={18} />
+          </a>
+        </div>
+
+        <div className="grid grid-cols-7 gap-1 mb-1">
+          {[1, 2, 3, 4, 5, 6, 0].map((i) => (
+            <div key={i} className="text-center text-[11px] uppercase tracking-widest text-on-surface-variant/70">
+              {DAY_SHORT[i]}
             </div>
+          ))}
+        </div>
+        <div className="grid grid-cols-7 gap-1">
+          {monthGrid.map((cell) => {
+            if (!cell.inMonth) return <div key={cell.dateStr} />;
 
-            {totalSlotPages > 1 && (
-              <div className="flex items-center justify-between mt-4">
-                <a
-                  href={slotsPageHref(slotsPage - 1)}
-                  aria-disabled={slotsPage <= 1}
-                  className={`px-4 py-2 rounded-full text-sm border border-outline-variant transition-colors ${
-                    slotsPage <= 1
-                      ? "opacity-40 pointer-events-none"
-                      : "text-on-surface-variant hover:border-primary"
-                  }`}
+            const daySlots = slotsByDate.get(cell.dateStr) ?? [];
+            const openCount = daySlots.filter((s) => !s.isBooked).length;
+            const bookedCount = daySlots.filter((s) => s.isBooked).length;
+            const blocked = blockedByDate.has(cell.dateStr);
+            const isToday = cell.dateStr === todayStr;
+            const isSelected = cell.dateStr === selectedDate;
+
+            return (
+              <a
+                key={cell.dateStr}
+                href={`/admin/availability?month=${monthStr}&date=${cell.dateStr}`}
+                className={`aspect-square rounded-lg p-1 flex flex-col items-center pt-1.5 transition-colors ${
+                  isSelected
+                    ? "bg-primary text-on-primary"
+                    : blocked
+                      ? "bg-error-container/50 hover:bg-error-container/70"
+                      : "hover:bg-surface-container-high"
+                } ${isToday && !isSelected ? "ring-1 ring-primary" : ""}`}
+              >
+                <span className={`text-sm font-medium ${isSelected ? "" : "text-on-surface"}`}>{cell.dayNum}</span>
+                {!isSelected && blocked && (
+                  <span className="text-[9px] text-on-error-container mt-0.5">Blocked</span>
+                )}
+                {!isSelected && !blocked && (openCount > 0 || bookedCount > 0) && (
+                  <span className="flex gap-0.5 mt-1">
+                    {openCount > 0 && (
+                      <span className="min-w-3.5 h-3.5 px-0.5 rounded-full bg-secondary-container text-on-secondary-container text-[9px] flex items-center justify-center">
+                        {openCount}
+                      </span>
+                    )}
+                    {bookedCount > 0 && (
+                      <span className="min-w-3.5 h-3.5 px-0.5 rounded-full bg-primary-container text-primary-fixed text-[9px] flex items-center justify-center">
+                        {bookedCount}
+                      </span>
+                    )}
+                  </span>
+                )}
+              </a>
+            );
+          })}
+        </div>
+      </div>
+
+      {selectedDate && (
+        <div className="mt-4 bg-surface-container-lowest rounded-xl p-6 service-card-shadow space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="font-display text-headline-sm text-primary">{formatDateOnly(selectedDate)}</h3>
+            <a
+              href={`/admin/availability?month=${monthStr}`}
+              className="text-on-surface-variant text-sm hover:underline"
+            >
+              Close
+            </a>
+          </div>
+
+          {selectedBlocked ? (
+            <div className="flex items-center justify-between bg-error-container/40 rounded-lg p-3">
+              <p className="text-sm text-on-error-container">
+                Blocked{selectedBlocked.reason ? ` — ${selectedBlocked.reason}` : ""}
+              </p>
+              <form action={deleteBlockedDate.bind(null, selectedBlocked.id)}>
+                <button type="submit" className="text-sm text-primary hover:underline shrink-0">
+                  Unblock
+                </button>
+              </form>
+            </div>
+          ) : (
+            <>
+              {selectedDaySlots.length === 0 ? (
+                <p className="text-on-surface-variant text-sm">No slots on this day.</p>
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  {selectedDaySlots.map((slot) => (
+                    <div
+                      key={slot.id}
+                      className={`flex items-center gap-1.5 pl-3 pr-1.5 py-1 rounded-full text-xs ${
+                        slot.isBooked
+                          ? "bg-primary-container text-primary-fixed"
+                          : "bg-secondary-container text-on-secondary-container"
+                      }`}
+                      title={`${slot.service.name} · ${slot.format}`}
+                    >
+                      <span>{formatTimeOnly(slot.startsAt)}</span>
+                      <span className="opacity-70">{slot.service.name}</span>
+                      {!slot.isBooked && (
+                        <form action={deleteSlot.bind(null, slot.id)}>
+                          <button
+                            type="submit"
+                            aria-label="Remove slot"
+                            className="w-4 h-4 flex items-center justify-center rounded-full hover:bg-error hover:text-on-error transition-colors"
+                          >
+                            ×
+                          </button>
+                        </form>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <form
+                action={createSlot}
+                className="grid grid-cols-2 sm:grid-cols-5 gap-2 pt-4 border-t border-outline-variant/50 items-end"
+              >
+                <input type="hidden" name="date" value={selectedDate} />
+                <div className="space-y-1 col-span-2 sm:col-span-1">
+                  <label className={labelClass}>Service</label>
+                  <select name="serviceId" required className={inputClass}>
+                    {services.map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {s.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="space-y-1">
+                  <label className={labelClass}>Format</label>
+                  <select name="format" defaultValue="online" className={inputClass}>
+                    <option value="online">Online</option>
+                    <option value="in-person">In person</option>
+                  </select>
+                </div>
+                <div className="space-y-1">
+                  <label className={labelClass}>Start</label>
+                  <input type="time" name="startTime" required className={inputClass} />
+                </div>
+                <div className="space-y-1">
+                  <label className={labelClass}>Minutes</label>
+                  <input type="number" name="durationMinutes" defaultValue={50} min={15} step={5} className={inputClass} />
+                </div>
+                <button
+                  type="submit"
+                  className="bg-primary text-on-primary px-4 py-2.5 rounded-full text-sm hover:bg-primary-container hover:text-on-primary-container transition-colors"
                 >
-                  ← Previous
-                </a>
-                <p className="text-on-surface-variant text-sm">
-                  Page {slotsPage} of {totalSlotPages}
-                </p>
-                <a
-                  href={slotsPageHref(slotsPage + 1)}
-                  aria-disabled={slotsPage >= totalSlotPages}
-                  className={`px-4 py-2 rounded-full text-sm border border-outline-variant transition-colors ${
-                    slotsPage >= totalSlotPages
-                      ? "opacity-40 pointer-events-none"
-                      : "text-on-surface-variant hover:border-primary"
-                  }`}
-                >
-                  Next →
-                </a>
-              </div>
-            )}
-          </>
-        );
-      })()}
+                  Add slot
+                </button>
+              </form>
+
+              <form
+                action={createBlockedDate}
+                className="flex items-center gap-2 pt-4 border-t border-outline-variant/50"
+              >
+                <input type="hidden" name="date" value={selectedDate} />
+                <input
+                  type="text"
+                  name="reason"
+                  placeholder="Reason (optional, e.g. Vacation)"
+                  className={`${inputClass} flex-1`}
+                />
+                <button type="submit" className="text-error text-sm hover:underline shrink-0">
+                  Block this day
+                </button>
+              </form>
+            </>
+          )}
+        </div>
+      )}
     </div>
   );
 }
