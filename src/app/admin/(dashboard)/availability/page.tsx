@@ -9,7 +9,6 @@ import {
 } from "@/lib/availability";
 import {
   createSlot,
-  deleteSlot,
   createRule,
   deleteRules,
   updateRule,
@@ -386,8 +385,8 @@ export default async function AdminAvailabilityPage({
         )}
       </div>
       <p className="text-on-surface-variant text-sm mb-4">
-        Click a day to see, add, or remove slots — or block it entirely. Recurring hours above
-        fill this in automatically; this is for one-off exceptions and an at-a-glance view.
+        Click a day to see who&apos;s booked, block the day off, or add a one-off extra slot.
+        Numbers show bookings only — your regular hours above already cover the rest.
       </p>
 
       <div className="bg-surface-container-lowest rounded-xl p-4 sm:p-6 service-card-shadow">
@@ -431,7 +430,6 @@ export default async function AdminAvailabilityPage({
             if (!cell.inMonth) return <div key={cell.dateStr} />;
 
             const daySlots = slotsByDate.get(cell.dateStr) ?? [];
-            const openCount = daySlots.filter((s) => !s.isBooked).length;
             const bookedCount = daySlots.filter((s) => s.isBooked).length;
             const blocked = blockedByDate.has(cell.dateStr);
             const isToday = cell.dateStr === todayStr;
@@ -453,18 +451,9 @@ export default async function AdminAvailabilityPage({
                 {!isSelected && blocked && (
                   <span className="text-[9px] text-on-error-container mt-0.5">Blocked</span>
                 )}
-                {!isSelected && !blocked && (openCount > 0 || bookedCount > 0) && (
-                  <span className="flex gap-0.5 mt-1">
-                    {openCount > 0 && (
-                      <span className="min-w-3.5 h-3.5 px-0.5 rounded-full bg-secondary-container text-on-secondary-container text-[9px] flex items-center justify-center">
-                        {openCount}
-                      </span>
-                    )}
-                    {bookedCount > 0 && (
-                      <span className="min-w-3.5 h-3.5 px-0.5 rounded-full bg-primary-container text-primary-fixed text-[9px] flex items-center justify-center">
-                        {bookedCount}
-                      </span>
-                    )}
+                {!isSelected && !blocked && bookedCount > 0 && (
+                  <span className="min-w-4 h-4 px-1 mt-1 rounded-full bg-primary-container text-primary-fixed text-[10px] flex items-center justify-center">
+                    {bookedCount}
                   </span>
                 )}
               </a>
@@ -498,37 +487,32 @@ export default async function AdminAvailabilityPage({
             </div>
           ) : (
             <>
-              {selectedDaySlots.length === 0 ? (
-                <p className="text-on-surface-variant text-sm">No slots on this day.</p>
-              ) : (
-                <div className="flex flex-wrap gap-2">
-                  {selectedDaySlots.map((slot) => (
-                    <div
-                      key={slot.id}
-                      className={`flex items-center gap-1.5 pl-3 pr-1.5 py-1 rounded-full text-xs ${
-                        slot.isBooked
-                          ? "bg-primary-container text-primary-fixed"
-                          : "bg-secondary-container text-on-secondary-container"
-                      }`}
-                      title={`${slot.service.name} · ${slot.format}`}
-                    >
-                      <span>{formatTimeOnly(slot.startsAt)}</span>
-                      <span className="opacity-70">{slot.service.name}</span>
-                      {!slot.isBooked && (
-                        <form action={deleteSlot.bind(null, slot.id)}>
-                          <button
-                            type="submit"
-                            aria-label="Remove slot"
-                            className="w-4 h-4 flex items-center justify-center rounded-full hover:bg-error hover:text-on-error transition-colors"
-                          >
-                            ×
-                          </button>
-                        </form>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
+              {(() => {
+                const booked = selectedDaySlots.filter((s) => s.isBooked);
+                const openCount = selectedDaySlots.length - booked.length;
+                return (
+                  <>
+                    {booked.length === 0 ? (
+                      <p className="text-on-surface-variant text-sm">No bookings this day.</p>
+                    ) : (
+                      <div className="space-y-1.5">
+                        <p className={labelClass}>Booked</p>
+                        {booked.map((slot) => (
+                          <p key={slot.id} className="text-sm text-on-surface">
+                            {formatTimeOnly(slot.startsAt)} — {slot.service.name} ({slot.format})
+                          </p>
+                        ))}
+                      </div>
+                    )}
+                    {openCount > 0 && (
+                      <p className="text-on-surface-variant text-sm">
+                        {openCount} more open slot{openCount === 1 ? "" : "s"} available to clients from your
+                        regular hours.
+                      </p>
+                    )}
+                  </>
+                );
+              })()}
 
               <form
                 action={createSlot}
