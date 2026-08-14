@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Users, Heart, MessageCircle, Stethoscope, CheckCircle2 } from "lucide-react";
 import Reveal from "@/components/Reveal";
-import Photo from "@/components/Photo";
 import { prisma } from "@/lib/prisma";
 import { getPageSeo } from "@/lib/pageSeo";
 
@@ -20,12 +19,6 @@ const serviceIcons: Record<string, typeof Users> = {
   therapy: Heart,
   "peer-group": Users,
   neuropsychology: Stethoscope,
-};
-
-const serviceImages: Record<string, string> = {
-  consultation: "/images/consultation-room.jpg",
-  therapy: "/images/therapy-room-helsinki.jpg",
-  neuropsychology: "/images/neuropsychology-assessment.jpg",
 };
 
 export default async function OurServicesPage() {
@@ -72,13 +65,6 @@ export default async function OurServicesPage() {
                 </div>
 
                 <div className="lg:col-span-2 space-y-6">
-                  {serviceImages[service.slug] && (
-                    <Photo
-                      src={serviceImages[service.slug]}
-                      alt={`${service.name} at WellSight, Helsinki`}
-                      className="hidden md:block aspect-[4/3] rounded-xl w-full max-w-xs"
-                    />
-                  )}
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-surface-container-lowest rounded-xl p-6 service-card-shadow">
                     <div>
                       <p className="text-label-md uppercase tracking-widest text-on-surface-variant/70 mb-1">

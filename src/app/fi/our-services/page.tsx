@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Users, Heart, MessageCircle, Stethoscope, CheckCircle2 } from "lucide-react";
 import Reveal from "@/components/Reveal";
-import Photo from "@/components/Photo";
 import { getPageSeo } from "@/lib/pageSeo";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -13,12 +12,6 @@ export async function generateMetadata(): Promise<Metadata> {
     alternates: { canonical: "/fi/our-services" },
   };
 }
-
-const serviceImages: Record<string, string> = {
-  konsultointi: "/images/consultation-room.jpg",
-  terapia: "/images/therapy-room-helsinki.jpg",
-  neuropsykologia: "/images/neuropsychology-assessment.jpg",
-};
 
 // Maps this page's Finnish slugs to the English Prisma slugs the actual
 // booking form (English-only) reads, so the service pre-selects correctly
@@ -114,13 +107,6 @@ export default function OurServicesPageFi() {
                 )}
               </div>
               <div className="lg:col-span-2 space-y-6">
-                {serviceImages[service.slug] && (
-                  <Photo
-                    src={serviceImages[service.slug]}
-                    alt={`${service.name} WellSightin vastaanotolla, Helsinki`}
-                    className="hidden md:block aspect-[4/3] rounded-xl w-full max-w-xs"
-                  />
-                )}
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 bg-surface-container-lowest rounded-xl p-6 service-card-shadow">
                   <div>
                     <p className="text-label-md uppercase tracking-widest text-on-surface-variant/70 mb-1">Kesto</p>
