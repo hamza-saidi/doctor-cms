@@ -62,6 +62,7 @@ export default function BookingRequestForm({
   const [serviceId, setServiceId] = useState(
     services.find((s) => s.slug === initialServiceSlug)?.id ?? services[0]?.id ?? ""
   );
+  const [format, setFormat] = useState<"online" | "in-person" | null>(null);
   const [monthStart, setMonthStart] = useState(() => {
     const today = dateToHelsinkiDateStr(new Date());
     return `${today.slice(0, 7)}-01`;
@@ -73,8 +74,8 @@ export default function BookingRequestForm({
   const todayStr = useMemo(() => dateToHelsinkiDateStr(new Date()), []);
 
   const slotsForService = useMemo(
-    () => slots.filter((s) => s.serviceId === serviceId),
-    [slots, serviceId]
+    () => slots.filter((s) => s.serviceId === serviceId && (!format || s.format === format)),
+    [slots, serviceId, format]
   );
 
   const slotsByDate = useMemo(() => {
@@ -126,6 +127,13 @@ export default function BookingRequestForm({
 
   function selectService(id: string) {
     setServiceId(id);
+    setFormat(null);
+    setSelectedDate(null);
+    setSlotId("");
+  }
+
+  function selectFormat(f: "online" | "in-person") {
+    setFormat(f);
     setSelectedDate(null);
     setSlotId("");
   }
@@ -139,7 +147,13 @@ export default function BookingRequestForm({
 
     const payload = showGeneralForm
       ? formValues
-      : { name: formValues.name, email: formValues.email, message: formValues.message, slotId };
+      : {
+          name: formValues.name,
+          email: formValues.email,
+          phone: formValues.phone,
+          message: formValues.message,
+          slotId,
+        };
 
     try {
       const res = await fetch("/api/booking-request", {
@@ -173,8 +187,8 @@ export default function BookingRequestForm({
     }
   }
 
-  const currentStep = showGeneralForm || slotId ? 3 : selectedDate ? 2 : 1;
-  const steps = ["Choose session type", "Pick a time", "Your details"];
+  const currentStep = showGeneralForm || slotId ? 4 : format ? 3 : 1;
+  const steps = ["Service", "Online or in person", "Pick a time", "Your details"];
 
   if (status === "sent") {
     return (
@@ -242,6 +256,25 @@ export default function BookingRequestForm({
             ))}
           </div>
 
+          <div className="flex flex-wrap gap-2">
+            {(["online", "in-person"] as const).map((f) => (
+              <button
+                key={f}
+                type="button"
+                onClick={() => selectFormat(f)}
+                className={`px-3 py-1.5 rounded-full text-sm transition-colors ${
+                  format === f
+                    ? "bg-primary text-on-primary"
+                    : "border border-outline-variant text-on-surface-variant hover:border-primary"
+                }`}
+              >
+                {f === "online" ? "Online" : "In person — Helsinki office"}
+              </button>
+            ))}
+          </div>
+
+          {format && (
+          <>
           <div className="flex items-center justify-between">
             <button
               type="button"
@@ -324,6 +357,8 @@ export default function BookingRequestForm({
               </div>
             </div>
           )}
+          </>
+          )}
         </>
       )}
 
@@ -391,8 +426,21 @@ export default function BookingRequestForm({
       </div>
 
       <div className="space-y-1.5">
+        <label htmlFor="phone" className="text-label-lg text-on-surface-variant">
+          Phone number
+        </label>
+        <input
+          id="phone"
+          name="phone"
+          required
+          type="tel"
+          className="w-full border border-outline-variant focus:border-primary rounded-lg p-3 bg-surface-container-lowest"
+        />
+      </div>
+
+      <div className="space-y-1.5">
         <label htmlFor="message" className="text-label-lg text-on-surface-variant">
-          Anything you&apos;d like us to know?
+          Anything you&apos;d like us to know? <span className="text-on-surface-variant/60">(optional)</span>
         </label>
         <textarea
           id="message"
@@ -403,7 +451,11 @@ export default function BookingRequestForm({
       </div>
 
       {!showGeneralForm && !slotId && (
-        <p className="text-on-surface-variant text-sm">Pick a highlighted day, then a time, to continue.</p>
+        <p className="text-on-surface-variant text-sm">
+          {!format
+            ? "Choose online or in person, then pick a highlighted day and time, to continue."
+            : "Pick a highlighted day, then a time, to continue."}
+        </p>
       )}
 
       {status === "error" && <p className="text-error text-sm">{errorMessage}</p>}

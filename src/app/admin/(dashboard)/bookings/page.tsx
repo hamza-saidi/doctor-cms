@@ -60,7 +60,13 @@ export default async function AdminBookingsPage({
   const needle = (q ?? "").trim().toLowerCase();
   const filteredBookings = allBookings.filter((b) => {
     if (statusFilter && b.status !== statusFilter) return false;
-    if (needle && !b.name.toLowerCase().includes(needle) && !b.email.toLowerCase().includes(needle)) return false;
+    if (
+      needle &&
+      !b.name.toLowerCase().includes(needle) &&
+      !b.email.toLowerCase().includes(needle) &&
+      !(b.phone ?? "").toLowerCase().includes(needle)
+    )
+      return false;
     return true;
   });
 
@@ -104,7 +110,7 @@ export default async function AdminBookingsPage({
           type="text"
           name="q"
           defaultValue={q ?? ""}
-          placeholder="Search name or email…"
+          placeholder="Search name, email, or phone…"
           className="w-full border border-outline-variant focus:border-primary rounded-lg p-2.5 bg-surface-container-lowest text-sm"
         />
         <button
@@ -137,7 +143,10 @@ export default async function AdminBookingsPage({
               <p className="text-on-surface font-medium">
                 {booking.name} · {booking.service.name}
               </p>
-              <p className="text-on-surface-variant text-sm">{booking.email}</p>
+              <p className="text-on-surface-variant text-sm">
+                {booking.email}
+                {booking.phone && ` · ${booking.phone}`}
+              </p>
               <p className="text-on-surface-variant text-sm">
                 {formatDateTime(booking.slot?.startsAt ?? null)} · {booking.format}
               </p>
