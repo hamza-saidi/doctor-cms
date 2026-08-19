@@ -72,7 +72,7 @@ export default function FirstSessionPageFi() {
             </div>
           </div>
           <Photo
-            src="/images/consultation-room.jpg"
+            src="/images/first-session-hero.webp"
             alt="Rauhallinen, yksityinen vastaanottohuone WellSightissa, jossa ensimmäiset tapaamiset pidetään"
             className="aspect-[4/5] rounded-xl w-full order-1 lg:order-2"
           />

@@ -12,8 +12,8 @@ export const business = {
   phoneDisplay: "+358 (0) 505 3 4040 3",
   whatsapp: "+358505340403",
   address: {
-    street: "Erottajankatu 15 A, 4th Floor",
-    postalCode: "00130",
+    street: "Lapinrinne 1",
+    postalCode: "00180",
     city: "Helsinki",
     country: "Finland",
     countryCode: "FI",
@@ -23,9 +23,9 @@ export const business = {
     { days: "Weekends", hours: "By request, subject to availability" },
   ],
   geo: {
-    // Erottajankatu 15, Helsinki — used for LocalBusiness structured data
-    lat: 60.1652,
-    lng: 24.9424,
+    // Lapinrinne 1, Helsinki — used for LocalBusiness structured data
+    lat: 60.1672,
+    lng: 24.9277,
   },
   emergencyNotice:
     "We do not provide emergency or crisis services – in an emergency, please call 112.",

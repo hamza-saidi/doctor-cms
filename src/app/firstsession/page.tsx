@@ -49,8 +49,8 @@ export default function FirstSessionPage() {
             </div>
           </div>
           <Photo
-            src="/images/consultation-room.jpg"
-            alt="A calm, private consultation room at WellSight where first sessions take place"
+            src="/images/first-session-hero.webp"
+            alt="Stepping into a calm, private room at WellSight for a first session"
             className="aspect-[4/5] rounded-xl w-full order-1 lg:order-2"
           />
         </div>

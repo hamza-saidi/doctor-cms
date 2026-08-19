@@ -4,6 +4,7 @@ import { ShieldCheck, Heart, Brain, Sparkles, CheckCircle2, MapPin, Clock, Train
 import Image from "next/image";
 import Reveal from "@/components/Reveal";
 import Photo from "@/components/Photo";
+import ServiceCarousel, { type CarouselService } from "@/components/ServiceCarousel";
 import ContactForm from "@/components/ContactForm";
 import LocationMap from "@/components/LocationMap";
 import { business } from "@/lib/content";
@@ -17,6 +18,52 @@ export async function generateMetadata(): Promise<Metadata> {
     alternates: { canonical: "/fi" },
   };
 }
+
+// Mirrors the same four services translated on /fi/our-services — kept as a
+// separate hardcoded list (not Prisma-backed) since service name/description
+// have no translation columns in the database.
+const fiServices: CarouselService[] = [
+  {
+    slug: "konsultointi",
+    imageKey: "consultation",
+    name: "Konsultointi",
+    shortDescription:
+      "Ammatillinen konsultaatio elämän eri tilanteiden selkeyttämiseen ja päätöksenteon tueksi.",
+    duration: "50 minuuttia",
+    fee: "90 €",
+    status: "available",
+  },
+  {
+    slug: "terapia",
+    imageKey: "therapy",
+    name: "Terapia",
+    shortDescription:
+      "Yksilöllinen istunto, jossa keskitytään psykologiseen tukeen, uusien näkökulmien löytämiseen ja henkilökohtaiseen kasvuun.",
+    duration: "50 min",
+    fee: "90 €",
+    status: "available",
+  },
+  {
+    slug: "vertaisryhmat",
+    imageKey: "peer-group",
+    name: "Vertaisryhmät",
+    shortDescription:
+      "Ryhmä, jossa jaetaan kokemuksia ja käsitellään yhteisiä teemoja (esim. omaishoitajat, maahanmuuttajat).",
+    duration: "60–90 min",
+    fee: "50 € / hlö",
+    status: "available",
+  },
+  {
+    slug: "neuropsykologia",
+    imageKey: "neuropsychology",
+    name: "Neuropsykologia",
+    shortDescription:
+      "Erikoistuneet kognitiiviset arvioinnit ja aivoterveyden seuranta — parhaillaan kehitteillä.",
+    duration: "60–90 minuuttia",
+    fee: "Ei vielä saatavilla",
+    status: "comingSoon",
+  },
+];
 
 export default function HomePageFi() {
   return (
@@ -95,45 +142,7 @@ export default function HomePageFi() {
                 Räätälöityä psykologista tukea omaan tilanteeseesi.
               </p>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 md:gap-8">
-              <div className="bg-surface-container-lowest rounded-xl overflow-hidden service-card-shadow flex flex-col">
-                <Photo
-                  src="/images/consultation-room.jpg"
-                  alt="Konsultointi WellSightin vastaanotolla, Helsinki"
-                  className="h-48 md:h-64 w-full"
-                />
-                <div className="p-6 md:p-8 flex-grow">
-                  <h3 className="font-display text-headline-sm text-primary mb-3">Konsultointi</h3>
-                  <p className="text-on-surface-variant text-body-md">
-                    Ammatillinen konsultaatio elämän eri tilanteiden selkeyttämiseen ja
-                    päätöksenteon tueksi.
-                  </p>
-                </div>
-                <div className="p-6 md:p-8 pt-0 mt-auto">
-                  <Link href="/fi/our-services" className="block w-full text-center py-3 rounded-full text-label-lg border-2 border-primary text-primary hover:bg-primary hover:text-on-primary transition-all duration-500">
-                    Katso konsultointi
-                  </Link>
-                </div>
-              </div>
-              <div className="relative bg-surface-container-lowest rounded-xl overflow-hidden service-card-shadow flex flex-col border-2 border-primary/10">
-                <Photo
-                  src="/images/therapy-room-helsinki.jpg"
-                  alt="Terapia WellSightin vastaanotolla, Helsinki"
-                  className="h-48 md:h-64 w-full"
-                />
-                <div className="p-6 md:p-8 flex-grow">
-                  <h3 className="font-display text-headline-sm text-primary mb-3">Terapia</h3>
-                  <p className="text-on-surface-variant text-body-md">
-                    Keskusteluapua elämän haasteisiin ja oman hyvinvoinnin vahvistamiseen.
-                  </p>
-                </div>
-                <div className="p-6 md:p-8 pt-0 mt-auto">
-                  <Link href="/fi/book-and-pay" className="block w-full text-center py-3 rounded-full text-label-lg bg-primary text-on-primary hover:bg-primary-container hover:text-on-primary-container transition-all duration-500">
-                    Varaa terapia-aika
-                  </Link>
-                </div>
-              </div>
-            </div>
+            <ServiceCarousel services={fiServices} locale="fi" />
           </div>
         </section>
       </Reveal>

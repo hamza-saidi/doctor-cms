@@ -4,7 +4,7 @@ import { useState } from "react";
 import { MapPin } from "lucide-react";
 import type { Locale } from "@/lib/i18n";
 
-const ADDRESS = "Erottajankatu 15 A, 00130 Helsinki, Finland";
+const ADDRESS = "Lapinrinne 1, 00180 Helsinki, Finland";
 
 // Keyless Google Maps embed — no API key/account needed, unlike the
 // official Maps Embed API. Good enough for a single static pin.
@@ -27,7 +27,7 @@ export default function LocationMap({
       )}
       <iframe
         src={src}
-        title="WellSight — Erottajankatu 15, Helsinki"
+        title="WellSight — Lapinrinne 1, Helsinki"
         loading="lazy"
         referrerPolicy="no-referrer-when-downgrade"
         onLoad={() => setLoaded(true)}

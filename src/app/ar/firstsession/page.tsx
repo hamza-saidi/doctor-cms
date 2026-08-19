@@ -70,7 +70,7 @@ export default function FirstSessionPageAr() {
             </div>
           </div>
           <Photo
-            src="/images/consultation-room.jpg"
+            src="/images/first-session-hero.webp"
             alt="غرفة استشارات هادئة وخاصة في WellSight حيث تُعقد الجلسات الأولى"
             className="aspect-[4/5] rounded-xl w-full"
           />

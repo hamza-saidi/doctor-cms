@@ -4,6 +4,7 @@ import { ShieldCheck, Heart, Brain, Sparkles, CheckCircle2, MapPin, Clock, Train
 import Image from "next/image";
 import Reveal from "@/components/Reveal";
 import Photo from "@/components/Photo";
+import ServiceCarousel, { type CarouselService } from "@/components/ServiceCarousel";
 import ContactForm from "@/components/ContactForm";
 import LocationMap from "@/components/LocationMap";
 import { business } from "@/lib/content";
@@ -17,6 +18,48 @@ export async function generateMetadata(): Promise<Metadata> {
     alternates: { canonical: "/ar" },
   };
 }
+
+// Mirrors the same four services translated on /ar/our-services — kept as a
+// separate hardcoded list (not Prisma-backed) since service name/description
+// have no translation columns in the database.
+const arServices: CarouselService[] = [
+  {
+    slug: "الاستشارات",
+    imageKey: "consultation",
+    name: "الاستشارات النفسية والأسرية",
+    shortDescription: "استشارات مهنية تهدف إلى تنظيم الأفكار ودعم اتخاذ القرارات.",
+    duration: "50 دقيقة",
+    fee: "90 يورو",
+    status: "available",
+  },
+  {
+    slug: "العلاج",
+    imageKey: "therapy",
+    name: "الدعم والجلسات العلاجية",
+    shortDescription: "جلسات علاجية قصيرة لاستكشاف الشفاء العاطفي والنمو وفهم الذات.",
+    duration: "50 دقيقة",
+    fee: "90 يورو",
+    status: "available",
+  },
+  {
+    slug: "الدعم-الجماعي",
+    imageKey: "peer-group",
+    name: "جلسات الدعم الجماعي",
+    shortDescription: "جلسات جماعية لتبادل الدعم والفهم حول قضايا مشتركة (مثل تحديات الهجرة).",
+    duration: "60-90 دقيقة",
+    fee: "50 يورو للشخص",
+    status: "available",
+  },
+  {
+    slug: "علم-النفس-العصبي",
+    imageKey: "neuropsychology",
+    name: "علم النفس العصبي",
+    shortDescription: "تقييمات معرفية متخصصة ومراقبة صحة الدماغ — قيد التطوير حاليًا.",
+    duration: "60-90 دقيقة",
+    fee: "غير متاحة بعد",
+    status: "comingSoon",
+  },
+];
 
 export default function HomePageAr() {
   return (
@@ -94,44 +137,7 @@ export default function HomePageAr() {
                 دعم نفسي مصمم خصيصًا لرحلتك نحو الوضوح والعافية.
               </p>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 md:gap-8">
-              <div className="bg-surface-container-lowest rounded-xl overflow-hidden service-card-shadow flex flex-col">
-                <Photo
-                  src="/images/consultation-room.jpg"
-                  alt="الاستشارات النفسية في عيادة WellSight بهلسنكي"
-                  className="h-48 md:h-64 w-full"
-                />
-                <div className="p-6 md:p-8 flex-grow">
-                  <h3 className="font-display text-headline-sm text-primary mb-3">الاستشارات النفسية والأسرية</h3>
-                  <p className="text-on-surface-variant text-body-md">
-                    استشارات مهنية تهدف إلى تنظيم الأفكار ودعم اتخاذ القرارت.
-                  </p>
-                </div>
-                <div className="p-6 md:p-8 pt-0 mt-auto">
-                  <Link href="/ar/our-services" className="block w-full text-center py-3 rounded-full text-label-lg border-2 border-primary text-primary hover:bg-primary hover:text-on-primary transition-all duration-500">
-                    عرض تفاصيل الاستشارة
-                  </Link>
-                </div>
-              </div>
-              <div className="relative bg-surface-container-lowest rounded-xl overflow-hidden service-card-shadow flex flex-col border-2 border-primary/10">
-                <Photo
-                  src="/images/therapy-room-helsinki.jpg"
-                  alt="جلسات العلاج النفسي في عيادة WellSight بهلسنكي"
-                  className="h-48 md:h-64 w-full"
-                />
-                <div className="p-6 md:p-8 flex-grow">
-                  <h3 className="font-display text-headline-sm text-primary mb-3">الدعم والجلسات العلاجية</h3>
-                  <p className="text-on-surface-variant text-body-md">
-                    جلسات علاجية قصيرة للشفاء العاطفي والنمو وفهم الذات.
-                  </p>
-                </div>
-                <div className="p-6 md:p-8 pt-0 mt-auto">
-                  <Link href="/ar/book-and-pay" className="block w-full text-center py-3 rounded-full text-label-lg bg-primary text-on-primary hover:bg-primary-container hover:text-on-primary-container transition-all duration-500">
-                    احجز جلسة علاجية
-                  </Link>
-                </div>
-              </div>
-            </div>
+            <ServiceCarousel services={arServices} locale="ar" />
           </div>
         </section>
       </Reveal>

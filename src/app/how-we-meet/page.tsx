@@ -20,18 +20,13 @@ export default function HowWeMeetPage() {
   return (
     <>
       <section className="py-16 md:py-24 px-4 md:px-16 max-w-[1280px] mx-auto text-center">
-        <h1 className="font-display text-headline-lg text-primary mb-4">
+        <h1 className="font-display text-headline-lg text-primary">
           How We Meet — In Person or Online
         </h1>
-        <p className="text-on-surface-variant text-body-lg max-w-2xl mx-auto">
-          Whether you&apos;re coming for mental health support, neuropsychological assessment,
-          or simply to share your story, you&apos;ll find a space designed to make you feel
-          safe, supported, and seen.
-        </p>
       </section>
 
       <Reveal>
-        <section className="bg-primary-fixed/40 px-4 md:px-16 py-12 md:py-16">
+        <section className="bg-surface-container px-4 md:px-16 py-12 md:py-16">
           <div className="max-w-[1280px] mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <LocationMap
               className="aspect-[4/3] rounded-xl w-full order-2 lg:order-1 border-2 border-deep-green"
@@ -76,10 +71,17 @@ export default function HowWeMeetPage() {
       </Reveal>
 
       <Reveal>
-        <section className="bg-surface-container px-4 md:px-16 py-12 md:py-16">
-          <div className="max-w-[1280px] mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
-            <div className="space-y-6">
-              <h2 className="font-display text-headline-md text-primary">Online Sessions</h2>
+        <section className="bg-surface-container-low px-4 md:px-16 py-12 md:py-16">
+          <div className="max-w-[1280px] mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 lg:items-center">
+            <h2 className="font-display text-headline-md text-primary lg:col-start-1 lg:row-start-1">
+              Online Sessions
+            </h2>
+            <Photo
+              src="/images/online-therapy-session.png"
+              alt="Woman joining an online therapy session with WellSight from her laptop"
+              className="aspect-[4/3] rounded-xl w-full lg:col-start-2 lg:row-start-1 lg:row-span-2"
+            />
+            <div className="space-y-6 lg:col-start-1 lg:row-start-2">
               <div>
                 <h4 className="text-label-lg text-primary uppercase tracking-widest mb-1">
                   How It Works
@@ -93,32 +95,28 @@ export default function HowWeMeetPage() {
                 </p>
               </div>
               <div className="mt-4">
-                <h4 className="text-label-lg text-primary uppercase tracking-widest mb-2">
+                <h4 className="text-label-lg text-primary uppercase tracking-widest mb-3">
                   Technical Requirements
                 </h4>
-                <ul className="space-y-2 text-on-surface-variant text-body-md">
-                  <li className="flex items-center gap-2">
-                    <Wifi size={18} className="text-primary" /> A stable internet connection
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <Smartphone size={18} className="text-primary" /> A device — computer,
-                    tablet, or phone
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <MessageSquare size={18} className="text-primary" /> A quiet and private
-                    space
-                  </li>
-                </ul>
-                <p className="text-on-surface-variant/80 text-sm mt-2">
-                  No extra software is needed — you can join directly from your browser.
-                </p>
+                <div className="bg-surface-container-lowest rounded-xl p-6 service-card-shadow space-y-4">
+                  {[
+                    { icon: Wifi, text: "A stable internet connection" },
+                    { icon: Smartphone, text: "A device — computer, tablet, or phone" },
+                    { icon: MessageSquare, text: "A quiet and private space" },
+                  ].map(({ icon: Icon, text }) => (
+                    <div key={text} className="flex items-center gap-4">
+                      <div className="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center flex-shrink-0">
+                        <Icon size={18} className="text-primary-fixed" />
+                      </div>
+                      <p className="text-on-surface text-body-md">{text}</p>
+                    </div>
+                  ))}
+                  <p className="text-on-surface-variant text-sm border-t border-outline-variant/40 pt-4">
+                    No extra software is needed — you can join directly from your browser.
+                  </p>
+                </div>
               </div>
             </div>
-            <Photo
-              src="/images/online-therapy-session.png"
-              alt="Woman joining an online therapy session with WellSight from her laptop"
-              className="aspect-[4/3] rounded-xl w-full"
-            />
           </div>
         </section>
       </Reveal>

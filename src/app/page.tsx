@@ -10,12 +10,12 @@ import {
   Clock,
   TrainFront,
   Laptop,
-  Users,
 } from "lucide-react";
 import Image from "next/image";
 import Reveal from "@/components/Reveal";
-import ImagePlaceholder from "@/components/ImagePlaceholder";
 import Photo from "@/components/Photo";
+import ServiceCarousel from "@/components/ServiceCarousel";
+import WhatsAppIcon from "@/components/icons/WhatsAppIcon";
 import ContactForm from "@/components/ContactForm";
 import LocationMap from "@/components/LocationMap";
 import { business, values } from "@/lib/content";
@@ -33,15 +33,8 @@ export async function generateMetadata(): Promise<Metadata> {
 
 const valueIcons = { shield: ShieldCheck, heart: Heart, brain: Brain, sparkles: Sparkles } as const;
 
-const serviceImages: Record<string, string> = {
-  consultation: "/images/consultation-room.jpg",
-  therapy: "/images/therapy-room-helsinki.jpg",
-};
-
 export default async function HomePage() {
   const services = await prisma.service.findMany({ orderBy: { sortOrder: "asc" } });
-  const featuredServices = services.filter((s) => s.status === "available").slice(0, 2);
-  const comingSoon = services.find((s) => s.status === "comingSoon");
 
   return (
     <>
@@ -87,10 +80,10 @@ export default async function HomePage() {
 
       {/* Who We Are */}
       <Reveal>
-        <section className="py-[clamp(60px,10vw,120px)] px-4 md:px-16 max-w-[1280px] mx-auto">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
+        <section className="bg-surface-container py-[clamp(60px,10vw,120px)] px-4 md:px-16">
+          <div className="max-w-[1280px] mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
             <div className="space-y-6 md:space-y-8 order-2 lg:order-1">
-              <h2 className="font-display text-headline-lg text-primary">Who We Are</h2>
+              <h2 className="font-display text-headline-lg text-primary">About Wellsight</h2>
               <div className="space-y-4 md:space-y-6 text-on-surface-variant text-body-lg">
                 <p>
                   WellSight is a private mental health practice in Helsinki, Finland. Built on
@@ -105,7 +98,7 @@ export default async function HomePage() {
                 </p>
                 <Link
                   href="/about-us"
-                  className="inline-block text-primary border-b border-primary/30 pb-1 text-label-lg hover:border-primary hover:opacity-70 transition-all duration-500"
+                  className="inline-block border-2 border-primary text-primary px-8 py-3 rounded-full text-label-lg hover:bg-primary hover:text-on-primary hover:scale-105 transition-all duration-500"
                 >
                   Learn more about us
                 </Link>
@@ -135,7 +128,7 @@ export default async function HomePage() {
 
       {/* Services */}
       <Reveal>
-        <section className="bg-surface-container py-[clamp(60px,10vw,120px)] px-4 md:px-16">
+        <section className="bg-surface-container-low py-[clamp(60px,10vw,120px)] px-4 md:px-16">
           <div className="max-w-[1280px] mx-auto">
             <div className="text-center mb-12 md:mb-16">
               <h2 className="font-display text-headline-lg text-primary mb-4">Our Services</h2>
@@ -144,92 +137,15 @@ export default async function HomePage() {
                 and wellness.
               </p>
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-              {featuredServices.map((service, i) => (
-                <div
-                  key={service.slug}
-                  className={`relative bg-surface-container-lowest rounded-xl overflow-hidden service-card-shadow service-card-hover flex flex-col group transition-all duration-500 hover:translate-y-[-8px] ${
-                    i === 1 ? "border-2 border-primary/10" : ""
-                  }`}
-                >
-                  {serviceImages[service.slug] ? (
-                    <Photo
-                      src={serviceImages[service.slug]}
-                      alt={`${service.name} at WellSight, Helsinki`}
-                      className="h-48 md:h-64 w-full"
-                    />
-                  ) : (
-                    <ImagePlaceholder
-                      label={service.name}
-                      icon={i === 0 ? Users : Heart}
-                      className="h-48 md:h-64 w-full"
-                    />
-                  )}
-                  <div className="p-6 md:p-8 flex-grow">
-                    <h3 className="font-display text-headline-sm text-primary mb-3">
-                      {service.name}
-                    </h3>
-                    <p className="text-on-surface-variant text-body-md mb-2">
-                      {service.shortDescription}
-                    </p>
-                    <p className="text-on-surface-variant/80 text-sm">
-                      {service.duration} · {service.fee}
-                    </p>
-                  </div>
-                  <div className="p-6 md:p-8 pt-0 mt-auto">
-                    <Link
-                      href={`/our-services#${service.slug}`}
-                      className={`block w-full text-center py-3 rounded-full text-label-lg transition-all duration-500 hover:scale-[1.02] ${
-                        i === 1
-                          ? "bg-primary text-on-primary hover:bg-primary-container hover:text-on-primary-container"
-                          : "border-2 border-primary text-primary hover:bg-primary hover:text-on-primary"
-                      }`}
-                    >
-                      {i === 1 ? "Book Therapy Session" : `View ${service.name} Details`}
-                    </Link>
-                  </div>
-                </div>
-              ))}
-
-              {comingSoon && (
-                <div className="relative bg-surface-container-lowest rounded-xl overflow-hidden service-card-shadow flex flex-col group transition-all duration-500 hover:translate-y-[-8px] sm:col-span-2 lg:col-span-1">
-                  <div className="absolute inset-0 bg-surface-container-highest/60 backdrop-blur-[2px] z-10 flex flex-col items-center justify-center p-8 text-center">
-                    <div className="bg-primary/90 text-white px-4 py-1 rounded-full text-xs text-label-lg mb-4">
-                      COMING SOON
-                    </div>
-                    <h3 className="font-display text-headline-sm text-primary mb-3 opacity-40">
-                      {comingSoon.name}
-                    </h3>
-                  </div>
-                  <Photo
-                    src="/images/neuropsychology-assessment.jpg"
-                    alt={`${comingSoon.name} at WellSight — coming soon`}
-                    className="h-48 md:h-64 w-full grayscale-[0.5] opacity-50"
-                  />
-                  <div className="p-6 md:p-8 flex-grow opacity-50">
-                    <p className="text-on-surface-variant text-body-md mb-8">
-                      {comingSoon.shortDescription}
-                    </p>
-                  </div>
-                  <div className="p-6 md:p-8 pt-0 mt-auto">
-                    <button
-                      className="w-full border-2 border-outline text-outline py-3 rounded-full text-label-lg cursor-not-allowed"
-                      disabled
-                    >
-                      Register Interest
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
+            <ServiceCarousel services={services} />
           </div>
         </section>
       </Reveal>
 
       {/* Why WellSight */}
       <Reveal>
-        <section className="py-[clamp(60px,10vw,120px)] px-4 md:px-16 max-w-[1280px] mx-auto overflow-hidden">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-24 items-center">
+        <section className="bg-surface-container py-[clamp(60px,10vw,120px)] px-4 md:px-16 overflow-hidden">
+          <div className="max-w-[1280px] mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-24 items-center">
             <div className="order-2 lg:order-1 grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-4">
                 {values.slice(0, 2).map((v) => {
@@ -237,7 +153,7 @@ export default async function HomePage() {
                   return (
                     <div
                       key={v.title}
-                      className="bg-primary-fixed p-6 md:p-8 rounded-xl transition-all duration-500 hover:scale-[1.03]"
+                      className="bg-surface-container-lowest service-card-shadow p-6 md:p-8 rounded-xl transition-all duration-500 hover:scale-[1.03]"
                     >
                       <Icon className="text-primary mb-4" size={32} strokeWidth={1.5} />
                       <h4 className="font-display text-headline-sm text-primary mb-2">
@@ -254,7 +170,7 @@ export default async function HomePage() {
                   return (
                     <div
                       key={v.title}
-                      className="bg-primary-fixed-dim p-6 md:p-8 rounded-xl transition-all duration-500 hover:scale-[1.03]"
+                      className="bg-surface-container-lowest service-card-shadow p-6 md:p-8 rounded-xl transition-all duration-500 hover:scale-[1.03]"
                     >
                       <Icon className="text-primary mb-4" size={32} strokeWidth={1.5} />
                       <h4 className="font-display text-headline-sm text-primary mb-2">
@@ -301,7 +217,7 @@ export default async function HomePage() {
 
       {/* Visit Us */}
       <Reveal>
-        <section className="bg-surface py-[clamp(60px,10vw,120px)] px-4 md:px-16 border-t border-surface-variant">
+        <section className="bg-surface-container-low py-[clamp(60px,10vw,120px)] px-4 md:px-16">
           <div className="max-w-[1280px] mx-auto">
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:items-center">
               <div className="lg:col-span-7 order-2 lg:order-1">
@@ -355,6 +271,12 @@ export default async function HomePage() {
                     </div>
                   </div>
                 </div>
+                <Link
+                  href="/pricing"
+                  className="inline-block w-full sm:w-auto text-center border-2 border-primary text-primary px-8 py-3 rounded-full text-label-lg hover:bg-primary hover:text-on-primary transition-all duration-500"
+                >
+                  View Services &amp; Pricing
+                </Link>
               </div>
             </div>
           </div>
@@ -363,22 +285,24 @@ export default async function HomePage() {
 
       {/* Online Sessions */}
       <Reveal>
-        <section className="py-[clamp(60px,10vw,120px)] px-4 md:px-16 max-w-[1280px] mx-auto">
-          <div className="bg-deep-green rounded-3xl overflow-hidden grid grid-cols-1 lg:grid-cols-2">
-            <div className="p-8 md:p-12 lg:p-20 flex flex-col justify-center space-y-6 md:space-y-8">
-              <h2 className="font-display text-headline-lg text-on-deep-green">
-                Online Sessions
-              </h2>
-              <p className="font-body text-on-deep-green/80 text-body-lg">
-                Therapy that meets you wherever you are — flexible, private, and secure.
-              </p>
-              <div className="flex items-start gap-4">
+        <section className="bg-surface-container py-[clamp(60px,10vw,120px)] px-4 md:px-16">
+          <div className="max-w-[1280px] mx-auto bg-deep-green rounded-3xl overflow-hidden grid grid-cols-1 lg:grid-cols-2">
+            <div className="p-8 md:p-12 lg:p-16 xl:p-20 flex flex-col justify-center gap-8 md:gap-10">
+              <div className="space-y-3">
+                <h2 className="font-display text-headline-lg text-on-deep-green">
+                  Online Sessions
+                </h2>
+                <p className="font-body text-on-deep-green/80 text-body-lg leading-relaxed">
+                  Therapy that meets you wherever you are — flexible, private, and secure.
+                </p>
+              </div>
+              <div className="flex items-start gap-4 border-t border-on-deep-green/15 pt-8">
                 <Laptop className="text-on-deep-green mt-1 flex-shrink-0" size={24} />
-                <div>
-                  <h4 className="text-label-lg text-on-deep-green mb-1">
+                <div className="space-y-1.5">
+                  <h4 className="text-label-lg text-on-deep-green">
                     Your safe space, just a click away
                   </h4>
-                  <p className="text-on-deep-green/80 text-body-md">
+                  <p className="text-on-deep-green/80 text-body-md leading-relaxed">
                     No extra software needed — join securely from your browser once your session
                     is booked.
                   </p>
@@ -402,9 +326,12 @@ export default async function HomePage() {
 
       {/* Contact */}
       <Reveal>
-        <section className="py-[clamp(60px,10vw,120px)] px-4 md:px-16 bg-surface-container-low">
+        <section
+          id="contact"
+          className="py-[clamp(60px,10vw,120px)] px-4 md:px-16 bg-surface-container-low scroll-mt-24"
+        >
           <div className="max-w-[1280px] mx-auto">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20">
+            <div className="grid grid-cols-1 lg:grid-cols-[340px_1fr] gap-12 lg:items-center">
               <div className="space-y-8 md:space-y-10">
                 <h2 className="font-display text-headline-lg text-primary">Contact us</h2>
                 <div className="space-y-6">
@@ -417,9 +344,20 @@ export default async function HomePage() {
                       {business.email}
                     </span>
                   </a>
-                  <p className="text-body-lg text-on-surface-variant">
-                    WhatsApp: {business.phoneDisplay}
-                  </p>
+                  <a
+                    href={`https://wa.me/${business.whatsapp.replace(/\D/g, "")}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-4 group"
+                  >
+                    <WhatsAppIcon
+                      className="text-primary group-hover:scale-110 transition-transform"
+                      size={22}
+                    />
+                    <span className="text-body-lg text-on-surface-variant group-hover:text-primary transition-colors">
+                      WhatsApp: {business.phoneDisplay}
+                    </span>
+                  </a>
                   <div className="flex items-start gap-4">
                     <MapPin className="text-primary mt-1 flex-shrink-0" size={22} />
                     <span className="text-body-lg text-on-surface-variant">
