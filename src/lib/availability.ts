@@ -5,6 +5,21 @@ export const HELSINKI_TZ = "Europe/Helsinki";
 // How far ahead recurring rules generate real AvailabilitySlot rows.
 const GENERATION_WINDOW_DAYS = 56; // 8 weeks
 
+// Baseline hours every available service is open by default, with no admin
+// setup required — matches the published "Monday – Friday: 8:00 AM – 6:00
+// PM" business hours. Weekends stay "by request" (not auto-generated),
+// matching the site's own stated hours; admin can still add explicit slots
+// there manually. Format is purely informational for the admin (which room
+// to expect the client in) — it doesn't gate client selection — so default
+// slots are generated once per time under a single canonical format rather
+// than once per format, which would otherwise let two different clients
+// book the exact same real-world instant under different format tags.
+const DEFAULT_DAY_START = "08:00";
+const DEFAULT_DAY_END = "18:00";
+const DEFAULT_SLOT_MINUTES = 50;
+const DEFAULT_SLOT_FORMAT = "online";
+const DEFAULT_WEEKDAYS = new Set([1, 2, 3, 4, 5]); // Mon–Fri (0 = Sunday .. 6 = Saturday)
+
 // Converts a Helsinki-local wall-clock date+time into the correct UTC
 // instant, DST-aware. Node has no built-in "construct Date from IANA-zone
 // local time," so this uses the classic double-conversion trick: format a
@@ -120,6 +135,77 @@ export async function ensureSlotsGenerated(): Promise<void> {
           startsAt,
           endsAt: new Date(slotStart + durationMs),
           format: rule.format,
+        });
+      }
+    }
+  }
+
+  if (candidates.length > 0) {
+    await prisma.availabilitySlot.createMany({ data: candidates, skipDuplicates: true });
+  }
+}
+
+// Materializes the default Mon–Fri 8:00–18:00, 50-minute-slot schedule for
+// every available service, for the rolling window ahead — the "every day
+// has open slots unless something blocks them" baseline, independent of
+// AvailabilityRule (which still layers on top for exceptions/extra hours,
+// e.g. weekend "by request" slots an admin adds manually). Idempotent and
+// cheap, safe to call on every relevant page load, same as
+// ensureSlotsGenerated().
+export async function ensureDefaultSlotsGenerated(): Promise<void> {
+  const services = await prisma.service.findMany({
+    where: { status: "available" },
+    select: { id: true },
+  });
+  if (services.length === 0) return;
+
+  const todayStr = dateToHelsinkiDateStr(new Date());
+  const blockedDates = new Set(
+    (await prisma.blockedDate.findMany({ select: { date: true } })).map((b) => b.date)
+  );
+
+  const rangeStart = helsinkiWallTimeToUtc(todayStr, "00:00");
+  const rangeEnd = helsinkiWallTimeToUtc(addDays(todayStr, GENERATION_WINDOW_DAYS), "00:00");
+
+  const [existingSlots, exceptions] = await Promise.all([
+    prisma.availabilitySlot.findMany({
+      where: { startsAt: { gte: rangeStart, lt: rangeEnd } },
+      select: { serviceId: true, startsAt: true },
+    }),
+    prisma.availabilityException.findMany({
+      where: { startsAt: { gte: rangeStart, lt: rangeEnd } },
+      select: { serviceId: true, startsAt: true },
+    }),
+  ]);
+
+  // Deliberately keyed by service+time only (not format) — see the format
+  // note above the constants this reads.
+  const seenKeys = new Set(existingSlots.map((s) => `${s.serviceId}|${s.startsAt.getTime()}`));
+  const exceptionKeys = new Set(exceptions.map((e) => `${e.serviceId}|${e.startsAt.getTime()}`));
+
+  const candidates: { serviceId: string; startsAt: Date; endsAt: Date; format: string }[] = [];
+  const durationMs = DEFAULT_SLOT_MINUTES * 60_000;
+
+  for (let i = 0; i < GENERATION_WINDOW_DAYS; i++) {
+    const dateStr = addDays(todayStr, i);
+    if (blockedDates.has(dateStr)) continue;
+    if (!DEFAULT_WEEKDAYS.has(dayOfWeekFromDateStr(dateStr))) continue;
+
+    const dayStart = helsinkiWallTimeToUtc(dateStr, DEFAULT_DAY_START).getTime();
+    const dayEnd = helsinkiWallTimeToUtc(dateStr, DEFAULT_DAY_END).getTime();
+
+    for (const service of services) {
+      for (let slotStart = dayStart; slotStart + durationMs <= dayEnd; slotStart += durationMs) {
+        if (slotStart < Date.now()) continue; // never backfill past slots
+        const startsAt = new Date(slotStart);
+        const key = `${service.id}|${startsAt.getTime()}`;
+        if (seenKeys.has(key) || exceptionKeys.has(key)) continue;
+        seenKeys.add(key);
+        candidates.push({
+          serviceId: service.id,
+          startsAt,
+          endsAt: new Date(slotStart + durationMs),
+          format: DEFAULT_SLOT_FORMAT,
         });
       }
     }

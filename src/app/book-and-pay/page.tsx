@@ -3,6 +3,7 @@ import Reveal from "@/components/Reveal";
 import BookingRequestForm from "@/components/BookingRequestForm";
 import { prisma } from "@/lib/prisma";
 import { getPageSeo } from "@/lib/pageSeo";
+import { ensureDefaultSlotsGenerated } from "@/lib/availability";
 
 export async function generateMetadata(): Promise<Metadata> {
   const seo = await getPageSeo("/book-and-pay");
@@ -22,11 +23,25 @@ export default async function BookAndPayPage({
   searchParams: Promise<{ service?: string }>;
 }) {
   const { service: initialServiceSlug } = await searchParams;
-  const [services, packages, slots] = await Promise.all([
-    prisma.service.findMany({ where: { status: "available" }, orderBy: { sortOrder: "asc" } }),
-    prisma.package.findMany({ where: { fee: { not: null } }, orderBy: { sortOrder: "asc" } }),
+
+  // Materializes the default Mon–Fri 8:00–18:00 schedule before slots are
+  // queried below, so every visit sees a fresh rolling window without any
+  // admin setup.
+  await ensureDefaultSlotsGenerated();
+
+  const [services, slots] = await Promise.all([
+    // Coming-soon services (e.g. Neuropsychology) are included so the form
+    // can show them in the service picker as visible-but-unselectable,
+    // rather than just omitting them entirely.
+    prisma.service.findMany({
+      where: { status: { in: ["available", "comingSoon"] } },
+      orderBy: { sortOrder: "asc" },
+    }),
+    // Booked slots are included too (not just isBooked: false) so the form
+    // can show them as greyed-out/unclickable instead of omitting them —
+    // clients see the full picture of what's taken vs. actually open.
     prisma.availabilitySlot.findMany({
-      where: { isBooked: false, startsAt: { gt: new Date() } },
+      where: { startsAt: { gt: new Date() } },
       orderBy: { startsAt: "asc" },
       include: { service: true },
     }),
@@ -47,56 +62,8 @@ export default async function BookAndPayPage({
 
       <Reveal>
         <section className="px-4 md:px-16 pb-16">
-          <div className="max-w-[1280px] mx-auto grid grid-cols-1 lg:grid-cols-2 gap-10">
-            <div className="space-y-4">
-              <h2 className="font-display text-headline-sm text-primary mb-2">
-                Sessions & Pricing
-              </h2>
-              {services.map((s) => (
-                <div
-                  key={s.id}
-                  className="bg-surface-container-lowest rounded-xl p-5 service-card-shadow flex justify-between items-start gap-4"
-                >
-                  <div>
-                    <p className="text-primary font-medium">{s.name}</p>
-                    <p className="text-on-surface-variant text-sm">{s.duration}</p>
-                  </div>
-                  <p className="text-primary text-label-lg whitespace-nowrap">{s.fee}</p>
-                </div>
-              ))}
-
-              {packages.length > 0 && (
-                <>
-                  <h2 className="font-display text-headline-sm text-primary pt-6 mb-2">
-                    Packages
-                  </h2>
-                  {packages.map((p) => (
-                    <div
-                      key={p.id}
-                      className="bg-surface-container-lowest rounded-xl p-5 service-card-shadow flex justify-between items-start gap-4"
-                    >
-                      <div>
-                        <p className="text-primary font-medium">{p.name}</p>
-                        <p className="text-on-surface-variant text-sm mt-1">{p.description}</p>
-                      </div>
-                      <p className="text-primary text-label-lg whitespace-nowrap">{p.fee}</p>
-                    </div>
-                  ))}
-                </>
-              )}
-            </div>
-
-            <div>
-              <h2 className="font-display text-headline-sm text-primary mb-2">
-                Request a Session
-              </h2>
-              <p className="text-on-surface-variant text-sm mb-4">
-                {slots.length > 0
-                  ? "Choose an open slot below, or leave it unselected and we'll coordinate a time by email."
-                  : "No open slots are published yet — send a request and we'll coordinate a time by email."}
-              </p>
-              <BookingRequestForm services={services} slots={slots} initialServiceSlug={initialServiceSlug} />
-            </div>
+          <div className="max-w-2xl mx-auto">
+            <BookingRequestForm services={services} slots={slots} initialServiceSlug={initialServiceSlug} />
           </div>
         </section>
       </Reveal>

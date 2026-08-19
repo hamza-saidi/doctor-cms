@@ -2,13 +2,13 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { prisma } from "@/lib/prisma";
 import {
   ensureSlotsGenerated,
+  ensureDefaultSlotsGenerated,
   dateToHelsinkiDateStr,
   helsinkiWallTimeToUtc,
   addDays,
   dayOfWeekFromDateStr,
 } from "@/lib/availability";
 import {
-  createSlot,
   createRule,
   deleteRules,
   updateRule,
@@ -16,6 +16,7 @@ import {
   deleteBlockedDate,
   clearUnbookedSlots,
 } from "./actions";
+import AddSlotForm from "./AddSlotForm";
 
 const inputClass =
   "w-full border border-outline-variant focus:border-primary rounded-lg p-2.5 bg-surface-container-lowest text-sm";
@@ -143,6 +144,7 @@ export default async function AdminAvailabilityPage({
 }) {
   const { edit: editKey, month: monthParam, date: dateParam } = await searchParams;
   await ensureSlotsGenerated();
+  await ensureDefaultSlotsGenerated();
 
   const todayStr = dateToHelsinkiDateStr(new Date());
   const monthStr = monthParam && /^\d{4}-\d{2}$/.test(monthParam) ? monthParam : todayStr.slice(0, 7);
@@ -514,43 +516,7 @@ export default async function AdminAvailabilityPage({
                 );
               })()}
 
-              <form
-                action={createSlot}
-                className="grid grid-cols-2 sm:grid-cols-5 gap-2 pt-4 border-t border-outline-variant/50 items-end"
-              >
-                <input type="hidden" name="date" value={selectedDate} />
-                <div className="space-y-1 col-span-2 sm:col-span-1">
-                  <label className={labelClass}>Service</label>
-                  <select name="serviceId" required className={inputClass}>
-                    {services.map((s) => (
-                      <option key={s.id} value={s.id}>
-                        {s.name}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div className="space-y-1">
-                  <label className={labelClass}>Format</label>
-                  <select name="format" defaultValue="online" className={inputClass}>
-                    <option value="online">Online</option>
-                    <option value="in-person">In person</option>
-                  </select>
-                </div>
-                <div className="space-y-1">
-                  <label className={labelClass}>Start</label>
-                  <input type="time" name="startTime" required className={inputClass} />
-                </div>
-                <div className="space-y-1">
-                  <label className={labelClass}>Minutes</label>
-                  <input type="number" name="durationMinutes" defaultValue={50} min={15} step={5} className={inputClass} />
-                </div>
-                <button
-                  type="submit"
-                  className="bg-primary text-on-primary px-4 py-2.5 rounded-full text-sm hover:bg-primary-container hover:text-on-primary-container transition-colors"
-                >
-                  Add slot
-                </button>
-              </form>
+              <AddSlotForm services={services} selectedDate={selectedDate} />
 
               <form
                 action={createBlockedDate}

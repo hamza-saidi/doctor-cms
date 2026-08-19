@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
-import { updateBookingStatus } from "./actions";
 import PaymentLinkButton from "@/components/admin/PaymentLinkButton";
+import SendClientEmailForm from "@/components/admin/SendClientEmailForm";
+import UpdateBookingStatusForm from "@/components/admin/UpdateBookingStatusForm";
 
 const PAGE_SIZE = 15;
 const STATUSES = ["pending", "confirmed", "completed", "no-show", "cancelled"] as const;
@@ -20,6 +21,7 @@ function formatDateTime(date: Date | null) {
     month: "short",
     hour: "2-digit",
     minute: "2-digit",
+    timeZone: "Europe/Helsinki",
   }).format(date);
 }
 
@@ -157,33 +159,13 @@ export default async function AdminBookingsPage({
               )}
             </div>
             <div className="flex flex-col sm:items-end gap-3">
-              <form
-                action={updateBookingStatus.bind(null, booking.id)}
-                className="flex items-center gap-3"
-              >
-                <select
-                  name="status"
-                  defaultValue={booking.status}
-                  className="border border-outline-variant rounded-lg p-2 text-sm bg-surface-container-lowest"
-                >
-                  {STATUSES.map((s) => (
-                    <option key={s} value={s}>
-                      {STATUS_LABELS[s]}
-                    </option>
-                  ))}
-                </select>
-                <button
-                  type="submit"
-                  className="bg-primary text-on-primary px-4 py-2 rounded-full text-sm hover:bg-primary-container hover:text-on-primary-container transition-colors"
-                >
-                  Update
-                </button>
-              </form>
+              <UpdateBookingStatusForm bookingId={booking.id} currentStatus={booking.status} />
               <PaymentLinkButton
                 bookingId={booking.id}
                 existingUrl={booking.mollieCheckoutUrl}
                 paid={booking.paid}
               />
+              <SendClientEmailForm bookingId={booking.id} clientEmail={booking.email} />
             </div>
           </div>
         ))}

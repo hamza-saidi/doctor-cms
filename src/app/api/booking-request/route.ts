@@ -5,22 +5,24 @@ export async function POST(request: Request) {
   const body = await request.json();
   const { name, email, phone, slotId, serviceId, format, message } = body ?? {};
 
-  if (!name || !email || !phone) {
+  // Format is purely informational (which room to expect the client in) —
+  // it no longer has to match the format tag on whichever slot they picked,
+  // so it's always required as its own field regardless of path.
+  if (!name || !email || !phone || !format) {
     return NextResponse.json({ error: "Missing required fields." }, { status: 400 });
   }
 
   try {
     if (slotId) {
+      // A slot only locks once the admin confirms a booking for it (see
+      // updateBookingStatus) — a fresh request just reserves nothing yet, so
+      // several clients can legitimately request the same slot in parallel.
+      // Only reject here if it's already confirmed-booked by someone else.
       const booking = await prisma.$transaction(async (tx) => {
         const slot = await tx.availabilitySlot.findUnique({ where: { id: slotId } });
         if (!slot || slot.isBooked) {
           throw new Error("SLOT_TAKEN");
         }
-
-        await tx.availabilitySlot.update({
-          where: { id: slotId },
-          data: { isBooked: true },
-        });
 
         return tx.booking.create({
           data: {
@@ -29,7 +31,7 @@ export async function POST(request: Request) {
             phone,
             serviceId: slot.serviceId,
             slotId: slot.id,
-            format: slot.format,
+            format,
             message: message || null,
           },
         });
@@ -38,7 +40,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ ok: true, bookingId: booking.id });
     }
 
-    if (!serviceId || !format) {
+    if (!serviceId) {
       return NextResponse.json({ error: "Missing required fields." }, { status: 400 });
     }
 
